@@ -5,9 +5,16 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"path/filepath"
 )
 
 var addr = flag.String("addr", ":13337", "http service address")
+
+var contentTypes = map[string]string{
+	".css":  "text/css; charset=utf-8",
+	".js":   "application/x-javascript; charset=utf-8",
+	".html": "text/html; charset=utf-8",
+}
 
 func serveFiles(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
@@ -22,11 +29,7 @@ func serveFiles(w http.ResponseWriter, r *http.Request) {
 
 	data, err := ioutil.ReadFile("./content" + filename)
 	if err == nil {
-		if filename == "/index.html" {
-			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		} else {
-			w.Header().Set("Content-Type", "application/x-javascript; charset=utf-8")
-		}
+		w.Header().Set("Content-Type", contentTypes[filepath.Ext(filename)])
 		_, err = w.Write(data)
 	}
 	if err != nil {
