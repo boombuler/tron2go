@@ -1,6 +1,5 @@
 package main
 
-import "log"
 import "time"
 
 type gameserver struct {
@@ -26,8 +25,12 @@ func createGameServer() *gameserver {
 	return result
 }
 
-func (gs *gameserver) newGame() {
-	gs.State = createGameState()
+func (self *gameserver) newGame() {
+	self.State = createGameState()
+	for _, p := range self.clients {
+		p.newPlayerState(true)
+	}
+	self.sendInitialState(nil)
 }
 
 func (self *gameserver) gameLoop(endSignal chan bool) {
@@ -44,7 +47,7 @@ func (self *gameserver) gameLoop(endSignal chan bool) {
 	}
 }
 
-func (self *gameserver) sendCurrentState(c *connection) {
+func (self *gameserver) sendInitialState(c *connection) {
 	data := &GameStateData{Blocks: make([]NewBlock, 0)}
 	for x, col := range self.State.Board {
 		for y, p := range col {
@@ -53,10 +56,28 @@ func (self *gameserver) sendCurrentState(c *connection) {
 			}
 		}
 	}
-	c.send <- data.Serialize()
+	if c != nil {
+		c.send <- data.Serialize()
+	} else if len(self.clients) > 0 {
+		self.broadcast <- data.Serialize()
+	}
 }
 
 func (self *gameserver) calcRound() {
+	if !self.State.IsRunning {
+		if len(self.clients) == 0 {
+			return
+		}
+		for _, p := range self.clients {
+			p.acceptDirection()
+			if p.state.acceptedDirection == NONE {
+				return
+			}
+		}
+		self.State.IsRunning = true
+		return
+	}
+
 	roundData := &RoundData{Blocks: make([]NewBlock, 0)}
 
 	for _, p := range self.clients {
@@ -101,11 +122,7 @@ func (self *gameserver) run() {
 	for {
 		select {
 		case c := <-self.Register:
-			id := <-self.idStore.get
-			log.Println("New Client")
-			self.clients[c] = createPlayer(c, id, self)
-			self.clients[c].newPlayerState()
-			self.sendCurrentState(c)
+			go self.onPlayerConnected(c)
 		case c := <-self.Unregister:
 			if self.clients[c].id > 0 {
 				self.idStore.free <- self.clients[c].id
@@ -118,6 +135,19 @@ func (self *gameserver) run() {
 				c.send <- m
 			}
 		}
+	}
+}
+
+func (self *gameserver) onPlayerConnected(c *connection) {
+	id := <-self.idStore.get
+	player := createPlayer(c, id, self)
+	self.clients[c] = player
+	player.newPlayerState(false)
+
+	if self.State != nil && self.State.IsRunning {
+		self.sendInitialState(c)
+	} else {
+		self.newGame()
 	}
 }
 

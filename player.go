@@ -40,7 +40,7 @@ func createPlayer(c *connection, id int, gs *gameserver) *player {
 	return result
 }
 
-func (p *player) newPlayerState() {
+func (p *player) newPlayerState(alive bool) {
 	playerIds := []int{}
 
 	for _, player := range p.gs.clients {
@@ -64,7 +64,7 @@ func (p *player) newPlayerState() {
 		Y:                 y,
 		direction:         NONE,
 		acceptedDirection: NONE,
-		alive:             true,
+		alive:             alive,
 	}
 	p.gs.State.Board[x][y] = p
 	p.state = state

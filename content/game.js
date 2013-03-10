@@ -111,7 +111,7 @@ $(function() {
 
 	$(window).on('resize', onResize);
 	$(document).bind('draw.blocks', function(ev, data) { drawBlocks(data.Blocks) });
-	$(document).bind('draw.gamestate', function(ev, data) { drawBlocks(data.Blocks) });
+	$(document).bind('draw.gamestate', function(ev, data) { board = []; drawBlocks(data.Blocks) });
 
 	bindInput();
 	onResize();

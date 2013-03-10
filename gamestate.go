@@ -1,11 +1,12 @@
 package main
 
 type GameState struct {
-	Board [][]*player
+	Board     [][]*player
+	IsRunning bool
 }
 
 func createGameState() *GameState {
-	result := &GameState{}
+	result := &GameState{IsRunning: false}
 
 	result.Board = make([][]*player, FIELD_WIDTH)
 	for i := range result.Board {
