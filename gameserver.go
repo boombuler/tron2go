@@ -100,15 +100,15 @@ func (self *gameserver) calcRound() {
 }
 
 func (self *gameserver) checkGameOver() {
-	anyoneAlive := false
+	alivecount := 0
 	for _, p := range self.clients {
 		if p.state.alive {
-			anyoneAlive = true
+			alivecount++
 			break
 		}
 	}
 
-	if !anyoneAlive {
+	if alivecount < 2 {
 		self.newGame()
 	}
 }
