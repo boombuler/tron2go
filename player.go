@@ -6,7 +6,9 @@ import (
 )
 
 type player struct {
-	id    int
+	Id    int
+	Score uint
+	Name  string
 	state *playerState
 	conn  *connection
 	gs    *gameserver
@@ -32,9 +34,11 @@ const (
 
 func createPlayer(c *connection, id int, gs *gameserver) *player {
 	result := &player{
-		conn: c,
-		id:   id,
-		gs:   gs,
+		conn:  c,
+		Id:    id,
+		gs:    gs,
+		Name:  "",
+		Score: 0,
 	}
 	go result.readInput()
 	return result
@@ -44,11 +48,11 @@ func (p *player) newPlayerState(alive bool) {
 	playerIds := []int{}
 
 	for _, player := range p.gs.clients {
-		playerIds = append(playerIds, player.id)
+		playerIds = append(playerIds, player.Id)
 	}
 
 	sort.Ints(playerIds)
-	idx := sort.SearchInts(playerIds, p.id)
+	idx := sort.SearchInts(playerIds, p.Id)
 
 	centerX := float64(FIELD_WIDTH) / 2.0
 	centerY := float64(FIELD_HEIGHT) / 2.0

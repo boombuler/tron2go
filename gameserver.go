@@ -48,11 +48,16 @@ func (self *gameserver) gameLoop(endSignal chan bool) {
 }
 
 func (self *gameserver) sendInitialState(c *connection) {
-	data := &GameStateData{Blocks: make([]NewBlock, 0)}
+	data := &GameStateData{Blocks: make([]NewBlock, 0), Players: make([]player, 0)}
+
+	for _, p := range self.clients {
+		data.Players = append(data.Players, *p)
+	}
+
 	for x, col := range self.State.Board {
 		for y, p := range col {
 			if p != nil {
-				data.Blocks = append(data.Blocks, *&NewBlock{X: x, Y: y, PlayerId: p.id})
+				data.Blocks = append(data.Blocks, *&NewBlock{X: x, Y: y, PlayerId: p.Id})
 			}
 		}
 	}
@@ -114,7 +119,7 @@ func (self *gameserver) movePlayer(p *player) *NewBlock {
 		self.State.Board[p.state.X][p.state.Y] = p
 	}
 
-	return &NewBlock{X: p.state.X, Y: p.state.Y, PlayerId: p.id}
+	return &NewBlock{X: p.state.X, Y: p.state.Y, PlayerId: p.Id}
 }
 
 func (self *gameserver) run() {
@@ -124,8 +129,8 @@ func (self *gameserver) run() {
 		case c := <-self.Register:
 			go self.onPlayerConnected(c)
 		case c := <-self.Unregister:
-			if self.clients[c].id > 0 {
-				self.idStore.free <- self.clients[c].id
+			if self.clients[c].Id > 0 {
+				self.idStore.free <- self.clients[c].Id
 			}
 			delete(self.clients, c)
 			close(c.send)

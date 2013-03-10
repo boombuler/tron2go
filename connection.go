@@ -41,7 +41,6 @@ func (c *connection) readPump() {
 		if err != nil {
 			break
 		}
-		log.Println(op)
 		switch op {
 		case websocket.OpPong:
 			c.ws.SetReadDeadline(time.Now().Add(readWait))
@@ -50,7 +49,6 @@ func (c *connection) readPump() {
 			if err != nil {
 				break
 			}
-			log.Println(string(message))
 			c.receive <- message
 		}
 	}

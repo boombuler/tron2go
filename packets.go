@@ -10,8 +10,9 @@ type NewBlock struct {
 }
 
 type GameStateData struct {
-	Event  string
-	Blocks []NewBlock
+	Event   string
+	Blocks  []NewBlock
+	Players []player
 }
 
 type RoundData struct {
