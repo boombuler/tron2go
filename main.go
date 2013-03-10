@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-var addr = flag.String("addr", ":8888", "http service address")
+var addr = flag.String("addr", ":13337", "http service address")
 
 func serveFiles(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
