@@ -44,8 +44,19 @@ func (self *gameserver) gameLoop(endSignal chan bool) {
 	}
 }
 
-func (self *gameserver) calcRound() {
+func (self *gameserver) sendCurrentState(c *connection) {
+	data := &GameStateData{Blocks: make([]NewBlock, 0)}
+	for x, col := range self.State.Board {
+		for y, p := range col {
+			if p != nil {
+				data.Blocks = append(data.Blocks, *&NewBlock{X: x, Y: y, PlayerId: p.id})
+			}
+		}
+	}
+	c.send <- data.Serialize()
+}
 
+func (self *gameserver) calcRound() {
 	roundData := &RoundData{Blocks: make([]NewBlock, 0)}
 
 	for _, p := range self.clients {
@@ -94,6 +105,7 @@ func (self *gameserver) run() {
 			log.Println("New Client")
 			self.clients[c] = createPlayer(c, id, self)
 			self.clients[c].newPlayerState()
+			self.sendCurrentState(c)
 		case c := <-self.Unregister:
 			if self.clients[c].id > 0 {
 				self.idStore.free <- self.clients[c].id

@@ -9,6 +9,11 @@ type NewBlock struct {
 	PlayerId int
 }
 
+type GameStateData struct {
+	Event  string
+	Blocks []NewBlock
+}
+
 type RoundData struct {
 	Event  string
 	Blocks []NewBlock
@@ -16,6 +21,16 @@ type RoundData struct {
 
 func (r *RoundData) Serialize() []byte {
 	r.Event = "draw.blocks"
+
+	result, err := json.Marshal(r)
+	if err != nil {
+		log.Println(err.Error())
+	}
+	return result
+}
+
+func (r *GameStateData) Serialize() []byte {
+	r.Event = "draw.gamestate"
 
 	result, err := json.Marshal(r)
 	if err != nil {

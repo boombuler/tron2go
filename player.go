@@ -66,6 +66,7 @@ func (p *player) newPlayerState() {
 		acceptedDirection: NONE,
 		alive:             true,
 	}
+	p.gs.State.Board[x][y] = p
 	p.state = state
 }
 
