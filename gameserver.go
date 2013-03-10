@@ -95,6 +95,22 @@ func (self *gameserver) calcRound() {
 		}
 	}
 	self.broadcast <- roundData.Serialize()
+
+	self.checkGameOver()
+}
+
+func (self *gameserver) checkGameOver() {
+	anyoneAlive := false
+	for _, p := range self.clients {
+		if p.state.alive {
+			anyoneAlive = true
+			break
+		}
+	}
+
+	if !anyoneAlive {
+		self.newGame()
+	}
 }
 
 func (self *gameserver) movePlayer(p *player) *NewBlock {
