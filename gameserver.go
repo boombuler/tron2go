@@ -1,6 +1,9 @@
 package main
 
-import "time"
+import (
+	"log"
+	"time"
+)
 
 type gameserver struct {
 	State      *GameState
@@ -26,6 +29,7 @@ func createGameServer() *gameserver {
 }
 
 func (self *gameserver) newGame() {
+	log.Println("NewGame")
 	self.State = createGameState()
 	for _, p := range self.clients {
 		p.newPlayerState(true)
@@ -104,7 +108,6 @@ func (self *gameserver) checkGameOver() {
 	for _, p := range self.clients {
 		if p.state.alive {
 			alivecount++
-			break
 		}
 	}
 
