@@ -70,7 +70,9 @@ func (p *player) newPlayerState(alive bool) {
 		acceptedDirection: NONE,
 		alive:             alive,
 	}
-	p.gs.State.Board[x][y] = p
+	if alive {
+		p.gs.State.Board[x][y] = p
+	}
 	p.state = state
 }
 
