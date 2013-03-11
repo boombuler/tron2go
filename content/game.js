@@ -28,7 +28,7 @@ function drawBoard() {
 }
 
 function onResize() {
-    playerThickness = Math.floor(Math.min($(document).width() / FIELD_WIDTH, $(document).height() / FIELD_HEIGHT));
+    playerThickness = Math.floor(Math.min($('.game-screen').width() / FIELD_WIDTH, $('.game-screen').height() / FIELD_HEIGHT));
     canvas.prop('width', FIELD_WIDTH * playerThickness);
     canvas.prop('height', FIELD_HEIGHT * playerThickness);
 
