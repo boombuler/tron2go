@@ -1,24 +1,27 @@
 var playerThickness;
 var canvas;
+var canvasContext;
 
 var board = [];
 
 function drawBlocks(blocks) {
     $.each(blocks, function(idx, block) {
-        canvas.drawRect({
-            fillStyle: PLAYER_COLORS[block.PlayerId],
-              x: block.X * playerThickness,
-              y: block.Y * playerThickness,
-              width: playerThickness,
-              height: playerThickness,
-              fromCenter: false
-        })
+        if (canvasContext) {
+            canvasContext.fillStyle = PLAYER_COLORS[block.PlayerId];
+            canvasContext.fillRect(block.X * playerThickness,
+                block.Y * playerThickness,
+                playerThickness,
+                playerThickness);
+        }
+
         board.push(block);
     });
 }
 
 function drawBoard() {
-    canvas.clearCanvas();
+    if (canvasContext) {
+        canvasContext.clearRect(0, 0, canvas.prop('width'), canvas.prop('height'));
+    }
     var b = board;
     board = []
     drawBlocks(b)
@@ -26,8 +29,8 @@ function drawBoard() {
 
 function onResize() {
     playerThickness = Math.floor(Math.min($(document).width() / FIELD_WIDTH, $(document).height() / FIELD_HEIGHT));
-    canvas.attr('width', FIELD_WIDTH * playerThickness);
-    canvas.attr('height', FIELD_HEIGHT * playerThickness);
+    canvas.prop('width', FIELD_WIDTH * playerThickness);
+    canvas.prop('height', FIELD_HEIGHT * playerThickness);
 
     drawBoard();
 }
@@ -36,8 +39,8 @@ function handleTouch(ev) {
     var x = ev.originalEvent.touches[0].clientX;
     var y = ev.originalEvent.touches[0].clientY;
 
-    var centerX = (canvas.attr('width') / 2.0);
-    var centerY = (canvas.attr('height') / 2.0);
+    var centerX = (canvas.prop('width') / 2.0);
+    var centerY = (canvas.prop('height') / 2.0);
 
     var deltaLeft  = x < centerX ? centerX - x : 0;
     var deltaUp    = y < centerY ? centerY - y : 0;
@@ -100,6 +103,9 @@ $(function() {
     }
 
     canvas = $('#arena');
+    if ((canvas.length == 1) && canvas[0].getContext) {
+        canvasContext = canvas[0].getContext('2d');
+    }
 
     $(window).on('resize', onResize);
     $(document).bind('draw.blocks', function(ev, data) { drawBlocks(data.Blocks) });
