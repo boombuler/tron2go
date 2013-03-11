@@ -6,7 +6,7 @@ import (
 )
 
 type GameServer struct {
-	Clients    map[*connection]*Player
+	Clients    map[*connection]*Client
 	Register   chan *connection
 	Unregister chan *connection
 	Broadcast  chan []byte
@@ -20,7 +20,7 @@ func NewGameServer() *GameServer {
 	result := &GameServer{
 		Register:   make(chan *connection),
 		Unregister: make(chan *connection),
-		Clients:    make(map[*connection]*Player),
+		Clients:    make(map[*connection]*Client),
 		Broadcast:  make(chan []byte),
 		idStore:    createIdStore(),
 	}
@@ -52,10 +52,12 @@ func (gs *GameServer) gameLoop(endSignal chan bool) {
 }
 
 func (gs *GameServer) SendInitialState(c *connection) {
-	data := &GameStateData{Blocks: make([]NewBlock, 0), Players: make([]Player, 0)}
+	data := &GameStateData{Blocks: make([]NewBlock, 0), Players: make([]Client, 0)}
 
 	for _, p := range gs.Clients {
-		data.Players = append(data.Players, *p)
+		if p.kind == Player {
+			data.Players = append(data.Players, *p)
+		}
 	}
 
 	for x, col := range gs.Board {
@@ -72,12 +74,24 @@ func (gs *GameServer) SendInitialState(c *connection) {
 	}
 }
 
+func (gs *GameServer) getPlayers() []*Client {
+	res := make([]*Client, 0)
+	for _, c := range gs.Clients {
+		if c.kind == Player {
+			res = append(res, c)
+		}
+	}
+	return res
+}
+
 func (gs *GameServer) calcRound() {
+	players := gs.getPlayers()
+
 	if !gs.IsRunning {
-		if len(gs.Clients) == 0 {
+		if len(players) == 0 {
 			return
 		}
-		for _, p := range gs.Clients {
+		for _, p := range players {
 			p.AcceptInput()
 			if p.Direction == NONE {
 				return
@@ -89,7 +103,7 @@ func (gs *GameServer) calcRound() {
 
 	roundData := &RoundData{Blocks: make([]NewBlock, 0)}
 
-	for _, p := range gs.Clients {
+	for _, p := range players {
 		if p.Alive {
 			blk := gs.movePlayer(p)
 			if blk != nil {
@@ -104,19 +118,22 @@ func (gs *GameServer) calcRound() {
 }
 
 func (gs *GameServer) checkGameOver() {
-	Alivecount := 0
+	alivecount := 0
 	for _, p := range gs.Clients {
-		if p.Alive {
-			Alivecount++
+		if p.kind == Player && p.Alive {
+			alivecount++
 		}
 	}
 
-	// if Alivecount < 2 {
+	// if alivecount < 2 {
 	//     gs.newGame()
 	// }
 }
 
-func (gs *GameServer) movePlayer(p *Player) *NewBlock {
+func (gs *GameServer) movePlayer(p *Client) *NewBlock {
+	if p.kind != Player {
+		return nil
+	}
 	p.AcceptInput()
 	switch p.Direction {
 	case NONE:
@@ -163,15 +180,10 @@ func (gs *GameServer) run() {
 }
 
 func (gs *GameServer) onPlayerConnected(c *connection) {
-	id := <-gs.idStore.get
-	player := NewPlayer(c, id, gs)
-	gs.Clients[c] = player
-	player.Reset(false)
+	gs.Clients[c] = NewClient(c, gs)
 
 	if gs.gameState != nil && gs.IsRunning {
 		gs.SendInitialState(c)
-	} else {
-		gs.newGame()
 	}
 }
 
@@ -209,4 +221,14 @@ func createIdStore() *idStore {
 		}
 	}()
 	return res
+}
+
+func (ids *idStore) TryGet() int {
+	select {
+	case id := <-ids.get:
+		return id
+	default:
+		return -1
+	}
+	return -1
 }

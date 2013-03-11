@@ -12,12 +12,31 @@ type NewBlock struct {
 type GameStateData struct {
 	Event   string
 	Blocks  []NewBlock
-	Players []Player
+	Players []Client
 }
 
 type RoundData struct {
 	Event  string
 	Blocks []NewBlock
+}
+
+type Identity struct {
+	Event string
+	Id    int
+	Kind  string
+}
+
+func (c *Client) SerializeIdentity() []byte {
+	ident := new(Identity)
+	ident.Event = "set.identity"
+	ident.Id = c.Id
+	ident.Kind = c.kind.String()
+
+	result, err := json.Marshal(ident)
+	if err != nil {
+		log.Println(err.Error())
+	}
+	return result
 }
 
 func (r *RoundData) Serialize() []byte {

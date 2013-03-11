@@ -83,6 +83,9 @@ function connect() {
     conn.onerror = function(evt) {
         setError('ERROR: '+ evt);
     }
+    conn.onopen = function(evt) {
+        conn.send(JSON.stringify({'Cmd' : 'set.name', 'Name': 'Foobar'}))
+    }
     conn.onmessage = function(evt) {
         data = JSON.parse(evt.data)
         $(document).trigger(data.Event, data);
@@ -121,7 +124,9 @@ $(function() {
         drawBoard();
         drawBlocks(data.Blocks);
     });
-
+    $(document).bind('set.identity', function(ev, data) {
+        // alert(JSON.stringify(data)); // Server tells us who we are...
+    });
     bindInput();
     onResize();
 });
