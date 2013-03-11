@@ -105,6 +105,12 @@ func (p *player) readInput() {
 		case "move.down":
 			if p.state.acceptedDirection != Up {
 				p.state.direction = Down
+			}		
+		case "set.name":
+			var name string
+			if msgData.GetValue("Name", &name) {
+				p.Name = name
+				p.gs.sendInitialState(nil) // Should be replaced with something that sends only the name
 			}
 		}
 	}
