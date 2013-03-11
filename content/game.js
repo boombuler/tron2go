@@ -69,7 +69,7 @@ function bindInput() {
 }
 
 function setError(msg) {
-    $('body').html('<div><b>'+msg+'</b></div>')
+    $('body').html('<div class="error-dlg-container"><div class="error-dlg">'+msg+'</div></div>')
 }
 
 function connect() {
@@ -103,9 +103,12 @@ $(function() {
     }
 
     canvas = $('#arena');
-    if ((canvas.length == 1) && canvas[0].getContext) {
-        canvasContext = canvas[0].getContext('2d');
+    if ((canvas.length < 1) || !canvas[0].getContext) {
+       setError('Your browser does not support canvas elements.');
+       return;
     }
+
+    canvasContext = canvas[0].getContext('2d');
 
     $(window).on('resize', onResize);
     $(document).bind('draw.blocks', function(ev, data) { drawBlocks(data.Blocks) });
