@@ -7,8 +7,8 @@ function drawBlocks(blocks) {
     $.each(blocks, function(idx, block) {
         canvas.drawRect({
             fillStyle: PLAYER_COLORS[block.PlayerId],
-              x: (1+block.X) * playerThickness,
-              y: (1+block.Y) * playerThickness,
+              x: block.X * playerThickness,
+              y: block.Y * playerThickness,
               width: playerThickness,
               height: playerThickness,
               fromCenter: false
@@ -18,24 +18,16 @@ function drawBlocks(blocks) {
 }
 
 function drawBoard() {
-    canvas.clearCanvas().drawRect({
-        strokeStyle: BORDER_COLOR,
-        strokeWidth: 2*playerThickness,
-          fillStyle: BACKGROUND_COLOR,
-          x: 0, y: 0,
-          width: (2+FIELD_WIDTH) * playerThickness,
-          height: (2+FIELD_HEIGHT) * playerThickness,
-          fromCenter: false
-    });
+    canvas.clearCanvas();
     var b = board;
     board = []
     drawBlocks(b)
 }
 
 function onResize() {
-    playerThickness = Math.floor(Math.min($(document).width() / (2+FIELD_WIDTH), $(document).height() / (2+FIELD_HEIGHT)));
-    canvas.attr('width', (2+FIELD_WIDTH) * playerThickness);
-    canvas.attr('height', (2+FIELD_HEIGHT) * playerThickness);
+    playerThickness = Math.floor(Math.min($(document).width() / FIELD_WIDTH, $(document).height() / FIELD_HEIGHT));
+    canvas.attr('width', FIELD_WIDTH * playerThickness);
+    canvas.attr('height', FIELD_HEIGHT * playerThickness);
 
     drawBoard();
 }
