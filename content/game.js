@@ -56,7 +56,7 @@ function handleTouch(ev) {
         $(document).trigger('move.down');
     else if (deltaUp == maxDelta)
         $(document).trigger('move.up');
-
+    ev.preventDefault()
 }
 
 function bindInput() {
