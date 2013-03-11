@@ -111,9 +111,9 @@ func (self *gameserver) checkGameOver() {
         }
     }
 
-    if alivecount < 2 {
-        self.newGame()
-    }
+    // if alivecount < 2 {
+    //     self.newGame()
+    // }
 }
 
 func (self *gameserver) movePlayer(p *player) *NewBlock {
