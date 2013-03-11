@@ -107,7 +107,7 @@ $(function() {
        return;
     }
 
-    canvas = $('#canvas');
+    canvas = $('#arena');
 
     $(window).on('resize', onResize);
     $(document).bind('draw.blocks', function(ev, data) { drawBlocks(data.Blocks) });
