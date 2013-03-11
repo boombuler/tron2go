@@ -7,10 +7,12 @@ import (
 )
 
 const (
-	FIELD_WIDTH      int    = 200
-	FIELD_HEIGHT     int    = 200
-	SOCKET_PATH      string = "/socket/tron"
-	SPEED                   = (time.Second / 40)
+	SURVIVER_SCORE uint   = 1
+	WINNER_SCORE   uint   = 4
+	FIELD_WIDTH    int    = 200
+	FIELD_HEIGHT   int    = 200
+	SOCKET_PATH    string = "/socket/tron"
+	SPEED                 = (time.Second / 40)
 )
 
 var PlayerColors []string = []string{"#00ff00", "#ff0000", "#8888ff", "#00fff0", "#fff000", "#f000ff", "#aaffaa", "#ffaa00", "#aa00ff", "#ffaaaa", "#faaaff", "#ffffff"}

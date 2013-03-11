@@ -74,18 +74,20 @@ func (gs *GameServer) SendInitialState(c *connection) {
 	}
 }
 
-func (gs *GameServer) getPlayers() []*Client {
+func (gs *GameServer) getPlayers(alive bool) []*Client {
 	res := make([]*Client, 0)
 	for _, c := range gs.Clients {
 		if c.kind == Player {
-			res = append(res, c)
+			if !alive || c.Alive {
+				res = append(res, c)
+			}
 		}
 	}
 	return res
 }
 
 func (gs *GameServer) calcRound() {
-	players := gs.getPlayers()
+	players := gs.getPlayers(false)
 
 	if !gs.IsRunning {
 		if len(players) == 0 {
@@ -101,19 +103,14 @@ func (gs *GameServer) calcRound() {
 		return
 	}
 
-	roundData := &RoundData{Blocks: make([]NewBlock, 0)}
+	roundData := NewRound(gs)
 
 	for _, p := range players {
 		if p.Alive {
-			blk := gs.movePlayer(p)
-			if blk != nil {
-				roundData.Blocks = append(roundData.Blocks, *blk)
-			}
-
+			roundData.movePlayer(p)
 		}
 	}
-	gs.Broadcast <- roundData.Serialize()
-
+	gs.Broadcast <- roundData.complete()
 	gs.checkGameOver()
 }
 
@@ -125,37 +122,9 @@ func (gs *GameServer) checkGameOver() {
 		}
 	}
 
-	// if alivecount < 2 {
-	//     gs.newGame()
-	// }
-}
-
-func (gs *GameServer) movePlayer(p *Client) *NewBlock {
-	if p.kind != Player {
-		return nil
+	if alivecount < 2 {
+		gs.newGame()
 	}
-	p.AcceptInput()
-	switch p.Direction {
-	case NONE:
-		return nil
-	case Left:
-		p.X = p.X - 1
-	case Right:
-		p.X = p.X + 1
-	case Up:
-		p.Y = p.Y - 1
-	case Down:
-		p.Y = p.Y + 1
-	}
-	if p.X < 0 || p.Y < 0 || p.X >= FIELD_WIDTH || p.Y >= FIELD_HEIGHT ||
-		gs.Board[p.X][p.Y] != nil {
-		p.Alive = false
-		return nil
-	} else {
-		gs.Board[p.X][p.Y] = p
-	}
-
-	return &NewBlock{X: p.X, Y: p.Y, PlayerId: p.Id}
 }
 
 func (gs *GameServer) run() {
