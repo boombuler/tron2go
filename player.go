@@ -78,9 +78,18 @@ func (p *player) acceptDirection() {
 	p.state.acceptedDirection = p.state.direction
 }
 
+
+
 func (p *player) readInput() {
-	for msg := range p.conn.receive {
-		switch string(msg) {
+	for data := range p.conn.receive {
+		msgData := rawJSON(data)
+
+		var cmd string
+		if !msgData.GetValue("Cmd", &cmd) {
+			continue
+		}
+		
+		switch cmd {
 		case "move.left":
 			if p.state.acceptedDirection != Right {
 				p.state.direction = Left

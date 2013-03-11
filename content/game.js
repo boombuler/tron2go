@@ -88,10 +88,14 @@ function connect() {
         $(document).trigger(data.Event, data);
     }
 
-    $(document).bind('move.right', function() { conn.send('move.right'); });
-    $(document).bind('move.left', function() { conn.send('move.left'); });
-    $(document).bind('move.up', function() { conn.send('move.up'); });
-    $(document).bind('move.down', function() { conn.send('move.down'); });
+    var sendCommand = function (cmd) {
+        conn.send(JSON.stringify({'Cmd': cmd}))
+    }
+
+    $(document).bind('move.right', function() { sendCommand('move.right'); });
+    $(document).bind('move.left', function() { sendCommand('move.left'); });
+    $(document).bind('move.up', function() { sendCommand('move.up'); });
+    $(document).bind('move.down', function() { sendCommand('move.down'); });
 
     return true;
 }
