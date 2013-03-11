@@ -1,212 +1,212 @@
 package main
 
 import (
-    "log"
-    "time"
+	"log"
+	"time"
 )
 
-type gameserver struct {
-    State      *GameState
-    clients    map[*connection]*player
-    Register   chan *connection
-    Unregister chan *connection
-    broadcast  chan []byte
-    idStore    *idStore
+type GameServer struct {
+	Clients    map[*connection]*Player
+	Register   chan *connection
+	Unregister chan *connection
+	Broadcast  chan []byte
+	idStore    *idStore
+	*gameState
 }
 
-var GameServer *gameserver = createGameServer()
+var gameserver *GameServer = NewGameServer()
 
-func createGameServer() *gameserver {
-    result := &gameserver{
-        Register:   make(chan *connection),
-        Unregister: make(chan *connection),
-        clients:    make(map[*connection]*player),
-        broadcast:  make(chan []byte),
-        idStore:    createIdStore(),
-    }
-    result.newGame()
-    return result
+func NewGameServer() *GameServer {
+	result := &GameServer{
+		Register:   make(chan *connection),
+		Unregister: make(chan *connection),
+		Clients:    make(map[*connection]*Player),
+		Broadcast:  make(chan []byte),
+		idStore:    createIdStore(),
+	}
+	result.newGame()
+	return result
 }
 
-func (self *gameserver) newGame() {
-    log.Println("NewGame")
-    self.State = createGameState()
-    for _, p := range self.clients {
-        p.newPlayerState(true)
-    }
-    self.sendInitialState(nil)
+func (gs *GameServer) newGame() {
+	log.Println("NewGame")
+	gs.gameState = NewGameState()
+	for _, p := range gs.Clients {
+		p.Reset(true)
+	}
+	gs.SendInitialState(nil)
 }
 
-func (self *gameserver) gameLoop(endSignal chan bool) {
-    ticker := time.NewTicker(SPEED)
-    defer ticker.Stop()
-    for {
-        select {
-        case <-ticker.C:
-            self.calcRound()
+func (gs *GameServer) gameLoop(endSignal chan bool) {
+	ticker := time.NewTicker(SPEED)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			gs.calcRound()
 
-        case <-endSignal:
-            return
-        }
-    }
+		case <-endSignal:
+			return
+		}
+	}
 }
 
-func (self *gameserver) sendInitialState(c *connection) {
-    data := &GameStateData{Blocks: make([]NewBlock, 0), Players: make([]player, 0)}
+func (gs *GameServer) SendInitialState(c *connection) {
+	data := &GameStateData{Blocks: make([]NewBlock, 0), Players: make([]Player, 0)}
 
-    for _, p := range self.clients {
-        data.Players = append(data.Players, *p)
-    }
+	for _, p := range gs.Clients {
+		data.Players = append(data.Players, *p)
+	}
 
-    for x, col := range self.State.Board {
-        for y, p := range col {
-            if p != nil {
-                data.Blocks = append(data.Blocks, *&NewBlock{X: x, Y: y, PlayerId: p.Id})
-            }
-        }
-    }
-    if c != nil {
-        c.send <- data.Serialize()
-    } else if len(self.clients) > 0 {
-        self.broadcast <- data.Serialize()
-    }
+	for x, col := range gs.Board {
+		for y, p := range col {
+			if p != nil {
+				data.Blocks = append(data.Blocks, *&NewBlock{X: x, Y: y, PlayerId: p.Id})
+			}
+		}
+	}
+	if c != nil {
+		c.send <- data.Serialize()
+	} else if len(gs.Clients) > 0 {
+		gs.Broadcast <- data.Serialize()
+	}
 }
 
-func (self *gameserver) calcRound() {
-    if !self.State.IsRunning {
-        if len(self.clients) == 0 {
-            return
-        }
-        for _, p := range self.clients {
-            p.acceptDirection()
-            if p.state.acceptedDirection == NONE {
-                return
-            }
-        }
-        self.State.IsRunning = true
-        return
-    }
+func (gs *GameServer) calcRound() {
+	if !gs.IsRunning {
+		if len(gs.Clients) == 0 {
+			return
+		}
+		for _, p := range gs.Clients {
+			p.AcceptInput()
+			if p.Direction == NONE {
+				return
+			}
+		}
+		gs.IsRunning = true
+		return
+	}
 
-    roundData := &RoundData{Blocks: make([]NewBlock, 0)}
+	roundData := &RoundData{Blocks: make([]NewBlock, 0)}
 
-    for _, p := range self.clients {
-        if p.state.alive {
-            blk := self.movePlayer(p)
-            if blk != nil {
-                roundData.Blocks = append(roundData.Blocks, *blk)
-            }
+	for _, p := range gs.Clients {
+		if p.Alive {
+			blk := gs.movePlayer(p)
+			if blk != nil {
+				roundData.Blocks = append(roundData.Blocks, *blk)
+			}
 
-        }
-    }
-    self.broadcast <- roundData.Serialize()
+		}
+	}
+	gs.Broadcast <- roundData.Serialize()
 
-    self.checkGameOver()
+	gs.checkGameOver()
 }
 
-func (self *gameserver) checkGameOver() {
-    alivecount := 0
-    for _, p := range self.clients {
-        if p.state.alive {
-            alivecount++
-        }
-    }
+func (gs *GameServer) checkGameOver() {
+	Alivecount := 0
+	for _, p := range gs.Clients {
+		if p.Alive {
+			Alivecount++
+		}
+	}
 
-    // if alivecount < 2 {
-    //     self.newGame()
-    // }
+	// if Alivecount < 2 {
+	//     gs.newGame()
+	// }
 }
 
-func (self *gameserver) movePlayer(p *player) *NewBlock {
-    p.acceptDirection()
-    switch p.state.acceptedDirection {
-    case NONE:
-        return nil
-    case Left:
-        p.state.X = p.state.X - 1
-    case Right:
-        p.state.X = p.state.X + 1
-    case Up:
-        p.state.Y = p.state.Y - 1
-    case Down:
-        p.state.Y = p.state.Y + 1
-    }
-    if p.state.X < 0 || p.state.Y < 0 || p.state.X >= FIELD_WIDTH || p.state.Y >= FIELD_HEIGHT ||
-        self.State.Board[p.state.X][p.state.Y] != nil {
-        p.state.alive = false
-        return nil
-    } else {
-        self.State.Board[p.state.X][p.state.Y] = p
-    }
+func (gs *GameServer) movePlayer(p *Player) *NewBlock {
+	p.AcceptInput()
+	switch p.Direction {
+	case NONE:
+		return nil
+	case Left:
+		p.X = p.X - 1
+	case Right:
+		p.X = p.X + 1
+	case Up:
+		p.Y = p.Y - 1
+	case Down:
+		p.Y = p.Y + 1
+	}
+	if p.X < 0 || p.Y < 0 || p.X >= FIELD_WIDTH || p.Y >= FIELD_HEIGHT ||
+		gs.Board[p.X][p.Y] != nil {
+		p.Alive = false
+		return nil
+	} else {
+		gs.Board[p.X][p.Y] = p
+	}
 
-    return &NewBlock{X: p.state.X, Y: p.state.Y, PlayerId: p.Id}
+	return &NewBlock{X: p.X, Y: p.Y, PlayerId: p.Id}
 }
 
-func (self *gameserver) run() {
-    go self.gameLoop(nil)
-    for {
-        select {
-        case c := <-self.Register:
-            go self.onPlayerConnected(c)
-        case c := <-self.Unregister:
-            if self.clients[c].Id > 0 {
-                self.idStore.free <- self.clients[c].Id
-            }
-            delete(self.clients, c)
-            close(c.send)
-            close(c.receive)
-        case m := <-self.broadcast:
-            for c, _ := range self.clients {
-                c.send <- m
-            }
-        }
-    }
+func (gs *GameServer) run() {
+	go gs.gameLoop(nil)
+	for {
+		select {
+		case c := <-gs.Register:
+			go gs.onPlayerConnected(c)
+		case c := <-gs.Unregister:
+			if gs.Clients[c].Id > 0 {
+				gs.idStore.free <- gs.Clients[c].Id
+			}
+			delete(gs.Clients, c)
+			close(c.send)
+			close(c.receive)
+		case m := <-gs.Broadcast:
+			for c, _ := range gs.Clients {
+				c.send <- m
+			}
+		}
+	}
 }
 
-func (self *gameserver) onPlayerConnected(c *connection) {
-    id := <-self.idStore.get
-    player := createPlayer(c, id, self)
-    self.clients[c] = player
-    player.newPlayerState(false)
+func (gs *GameServer) onPlayerConnected(c *connection) {
+	id := <-gs.idStore.get
+	player := NewPlayer(c, id, gs)
+	gs.Clients[c] = player
+	player.Reset(false)
 
-    if self.State != nil && self.State.IsRunning {
-        self.sendInitialState(c)
-    } else {
-        self.newGame()
-    }
+	if gs.gameState != nil && gs.IsRunning {
+		gs.SendInitialState(c)
+	} else {
+		gs.newGame()
+	}
 }
 
-func (self *gameserver) acceptNewPlayer() bool {
-    select {
-    case id := <-self.idStore.get:
-        self.idStore.free <- id
-        return true
-    default:
-        return false
-    }
-    return false
+func (gs *GameServer) CanAcceptPlayer() bool {
+	select {
+	case id := <-gs.idStore.get:
+		gs.idStore.free <- id
+		return true
+	default:
+		return false
+	}
+	return false
 }
 
 type idStore struct {
-    get  <-chan int
-    free chan<- int
+	get  <-chan int
+	free chan<- int
 }
 
 func createIdStore() *idStore {
-    get := make(chan int, len(PlayerColors))
-    free := make(chan int)
+	get := make(chan int, len(PlayerColors))
+	free := make(chan int)
 
-    res := &idStore{get: get, free: free}
+	res := &idStore{get: get, free: free}
 
-    go func() {
-        for i := 0; i < len(PlayerColors); i++ {
-            get <- i
-        }
-        for {
-            select {
-            case id := <-free:
-                get <- id
-            }
-        }
-    }()
-    return res
+	go func() {
+		for i := 0; i < len(PlayerColors); i++ {
+			get <- i
+		}
+		for {
+			select {
+			case id := <-free:
+				get <- id
+			}
+		}
+	}()
+	return res
 }

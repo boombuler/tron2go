@@ -1,16 +1,16 @@
 package main
 
-type GameState struct {
-	Board     [][]*player
+type gameState struct {
+	Board     [][]*Player
 	IsRunning bool
 }
 
-func createGameState() *GameState {
-	result := &GameState{IsRunning: false}
+func NewGameState() *gameState {
+	result := &gameState{IsRunning: false}
 
-	result.Board = make([][]*player, FIELD_WIDTH)
+	result.Board = make([][]*Player, FIELD_WIDTH)
 	for i := range result.Board {
-		result.Board[i] = make([]*player, FIELD_HEIGHT)
+		result.Board[i] = make([]*Player, FIELD_HEIGHT)
 	}
 
 	return result

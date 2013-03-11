@@ -40,7 +40,7 @@ func serveFiles(w http.ResponseWriter, r *http.Request) {
 func main() {
 	flag.Parse()
 
-	go GameServer.run()
+	go gameserver.run()
 
 	http.HandleFunc("/", serveFiles)
 	http.HandleFunc("/consts.js", serveConsts)

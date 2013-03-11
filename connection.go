@@ -32,7 +32,7 @@ type connection struct {
 // readPump pumps messages from the websocket connection to the hub.
 func (c *connection) readPump() {
 	defer func() {
-		GameServer.Unregister <- c
+		gameserver.Unregister <- c
 		c.ws.Close()
 	}()
 	c.ws.SetReadDeadline(time.Now().Add(readWait))
@@ -95,7 +95,7 @@ func serveSocket(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Origin not allowed", 403)
 		return
 	}
-	if GameServer.acceptNewPlayer() {
+	if gameserver.CanAcceptPlayer() {
 		ws, err := websocket.Upgrade(w, r.Header, "", 1024, 1024)
 
 		if err != nil {
@@ -105,7 +105,7 @@ func serveSocket(w http.ResponseWriter, r *http.Request) {
 		}
 
 		c := &connection{send: make(chan []byte), receive: make(chan []byte), ws: ws}
-		GameServer.Register <- c
+		gameserver.Register <- c
 		go c.writePump()
 		c.readPump()
 	} else {
