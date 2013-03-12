@@ -95,20 +95,17 @@ func serveSocket(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Origin not allowed", 403)
 		return
 	}
-	if gameserver.CanAcceptPlayer() {
-		ws, err := websocket.Upgrade(w, r.Header, "", 1024, 1024)
 
-		if err != nil {
-			http.Error(w, err.Error(), 400)
-			log.Println(err)
-			return
-		}
+	ws, err := websocket.Upgrade(w, r.Header, "", 1024, 1024)
 
-		c := &connection{send: make(chan []byte), receive: make(chan []byte), ws: ws}
-		gameserver.Register <- c
-		go c.writePump()
-		c.readPump()
-	} else {
-		http.Error(w, "No free slots", 500)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		log.Println(err)
+		return
 	}
+
+	c := &connection{send: make(chan []byte), receive: make(chan []byte), ws: ws}
+	gameserver.Register <- c
+	go c.writePump()
+	c.readPump()
 }
