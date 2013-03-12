@@ -101,6 +101,7 @@ func (c *Client) Reset(alive bool) {
 		c.server.Board[x][y] = c
 	}
 	c.playerState = state
+	c.input.Clear()
 }
 
 func (c *Client) AcceptInput() {
