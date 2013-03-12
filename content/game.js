@@ -3,6 +3,7 @@ var canvas;
 var canvasContext;
 
 var board = [];
+var Nickname = undefined;
 
 function drawBlocks(blocks) {
     $.each(blocks, function(idx, block) {
@@ -104,9 +105,6 @@ function setError(msg) {
 }
 
 function connect() {
-    if (!window['WebSocket'])
-        return false;
-
     conn = new WebSocket(WEBSOCKET_URL);
     conn.onclose = function(evt) {
         setError('Disconnected.');
@@ -115,7 +113,9 @@ function connect() {
         setError('ERROR: '+ evt);
     }
     conn.onopen = function(evt) {
-        conn.send(JSON.stringify({'Cmd' : 'set.name', 'Name': 'Foobar'}))
+        $('.game-screen').show()
+        onResize();
+        conn.send(JSON.stringify({'Cmd' : 'set.name', 'Name': Nickname}))
     }
     conn.onmessage = function(evt) {
         data = JSON.parse(evt.data)
@@ -130,12 +130,33 @@ function connect() {
     $(document).bind('move.left', function() { sendCommand('move.left'); });
     $(document).bind('move.up', function() { sendCommand('move.up'); });
     $(document).bind('move.down', function() { sendCommand('move.down'); });
-
-    return true;
 }
 
+function allowLocalStorage() {
+    try {
+        return 'localStorage' in window && window['localStorage'] !== null;
+    } catch (e) {
+        return false;
+    }
+}
+
+function queryName() {
+    if (allowLocalStorage()) {
+        Nickname = localStorage.getItem("Nickname")
+    }
+    if (!Nickname) {
+        Nickname = prompt("Name: ");
+        if (allowLocalStorage()) {
+            localStorage.setItem("Nickname", Nickname)
+        }
+    }
+    connect();
+}
+
+
 $(function() {
-    if (!connect()) {
+    $('.game-screen').hide()
+    if (!window['WebSocket']) {
        setError('Your browser does not support WebSockets.');
        return;
     }
@@ -160,5 +181,5 @@ $(function() {
         // alert(JSON.stringify(data)); // Server tells us who we are...
     });
     bindInput();
-    onResize();
+    queryName();
 });
