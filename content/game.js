@@ -29,6 +29,8 @@ function drawBoard() {
 }
 
 function updatePlayerList(players) {
+    players.sort(function(a, b) { return b.Score - a.Score; })
+
     var playersDiv = $('#players');
     playersDiv.empty();
 
