@@ -27,10 +27,41 @@ function drawBoard() {
     drawBlocks(b)
 }
 
+function updatePlayerList(players) {
+    var playersDiv = $('#players');
+    playersDiv.empty();
+
+    var list = $('<ul>');
+    $.each(players, function(idx, player) {
+        var listItem = $('<li>').css('color', PLAYER_COLORS[player.Id]);
+        $('<span>').addClass('player-name').text(player.Name).appendTo(listItem);
+        $('<span>').addClass('player-score').text(player.Score).appendTo(listItem);
+        listItem.appendTo(list);
+    });
+    list.appendTo(playersDiv);
+}
+
 function onResize() {
-    playerThickness = Math.floor(Math.min($('.game-screen').width() / FIELD_WIDTH, $('.game-screen').height() / FIELD_HEIGHT));
+    var gameScreen = $('.game-screen');
+    var gameContent = $('.game-content');
+    var playersDiv = $('#players');
+
+    var maxCanvasWidth = gameScreen.width() - playersDiv.outerWidth() - 16;
+    var maxCanvasHeight = gameScreen.height() - 16;
+    playerThickness = Math.floor(Math.min(maxCanvasWidth / FIELD_WIDTH, maxCanvasHeight / FIELD_HEIGHT));
+    if (playerThickness < 1) {
+        playerThickness = 1;
+    }
+
     canvas.prop('width', FIELD_WIDTH * playerThickness);
     canvas.prop('height', FIELD_HEIGHT * playerThickness);
+
+    playersDiv.css('height', canvas.prop('height'));
+
+    gameContent.css({
+        top: Math.max(((gameScreen.height() / 2) - (gameContent.outerHeight() / 2)), 5),
+        left: Math.max(((gameScreen.width() / 2) - (gameContent.outerWidth() / 2)), 5)
+    });
 
     drawBoard();
 }
@@ -123,6 +154,7 @@ $(function() {
         board = [];
         drawBoard();
         drawBlocks(data.Blocks);
+        updatePlayerList(data.Players);
     });
     $(document).bind('set.identity', function(ev, data) {
         // alert(JSON.stringify(data)); // Server tells us who we are...

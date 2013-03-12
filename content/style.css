@@ -12,17 +12,50 @@ body {
 }
 
 .game-screen {
+    position: relative;
     height: 100%;
-    padding: 1em;
     -webkit-box-sizing: border-box;
        -moz-box-sizing: border-box;
             box-sizing: border-box;
 }
 
-#arena {
+.game-content {
+    position: absolute;
+    white-space: nowrap;
+}
+
+#players {
+    float: left;
+    width: 200px;
+    margin-right: 5px;
+    border: 2px solid #33B5E5;
+}
+
+#players ul {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+}
+
+#players ul li {
+    position: relative;
+    margin: 0.7em;
+}
+
+#players ul li .player-name {
     display: block;
-    margin-left: auto;
-    margin-right: auto;
+    margin-right: 2em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#players ul li .player-score {
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+#arena {
     border: 2px solid #33B5E5;
 }
 
