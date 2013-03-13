@@ -42,6 +42,10 @@ body {
     margin: 0.7em;
 }
 
+#players .player-myself {
+    font-weight: bold;
+}
+
 #players ul li .player-name {
     display: block;
     margin-right: 2em;

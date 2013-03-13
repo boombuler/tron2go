@@ -3,6 +3,7 @@ var canvas;
 var canvasContext;
 
 var board = [];
+var playerId;
 var Nickname = undefined;
 
 function drawBlocks(blocks) {
@@ -37,8 +38,13 @@ function updatePlayerList(players) {
     var list = $('<ul>');
     $.each(players, function(idx, player) {
         var listItem = $('<li>').css('color', PLAYER_COLORS[player.Id]);
+        if (player.Id == playerId) {
+            listItem.addClass('player-myself');
+        }
+
         $('<span>').addClass('player-name').text(player.Name).appendTo(listItem);
         $('<span>').addClass('player-score').text(player.Score).appendTo(listItem);
+
         listItem.appendTo(list);
     });
     list.appendTo(playersDiv);
@@ -180,7 +186,7 @@ $(function() {
         updatePlayerList(data.Players);
     });
     $(document).bind('set.identity', function(ev, data) {
-        // alert(JSON.stringify(data)); // Server tells us who we are...
+         playerId = data.Id;
     });
     bindInput();
     queryName();
