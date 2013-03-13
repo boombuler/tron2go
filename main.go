@@ -9,6 +9,7 @@ import (
 )
 
 var addr = flag.String("addr", ":13337", "http service address")
+var roomcnt = flag.Int("room", 1, "how many rooms should be hosted")
 
 var contentTypes = map[string]string{
 	".css":  "text/css; charset=utf-8",
@@ -40,11 +41,12 @@ func serveFiles(w http.ResponseWriter, r *http.Request) {
 func main() {
 	flag.Parse()
 
-	go gameserver.run()
+	go roomserver.start(*roomcnt)
 
 	http.HandleFunc("/", serveFiles)
 	http.HandleFunc("/consts.js", serveConsts)
 	http.HandleFunc(SOCKET_PATH, serveSocket)
+	http.Handle("/rooms/", roomserver)
 
 	err := http.ListenAndServe(*addr, nil)
 	if err != nil {

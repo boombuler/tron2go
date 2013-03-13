@@ -26,6 +26,14 @@ type Identity struct {
 	Kind  string
 }
 
+type RoomData struct {
+	Id int
+	MaxPlayers int
+	Players []Client
+}
+
+type RoomsData []RoomData
+
 func (c *Client) SerializeIdentity() []byte {
 	ident := new(Identity)
 	ident.Event = "set.identity"
@@ -53,6 +61,14 @@ func (r *GameStateData) Serialize() []byte {
 	r.Event = "draw.gamestate"
 
 	result, err := json.Marshal(r)
+	if err != nil {
+		log.Println(err.Error())
+	}
+	return result
+}
+
+func (rooms *RoomsData) Serialize() []byte{
+	result, err := json.Marshal(rooms)
 	if err != nil {
 		log.Println(err.Error())
 	}

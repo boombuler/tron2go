@@ -19,6 +19,7 @@ func newRawJSON(data []byte) rawJson {
 }
 
 func (raw rawJson) getValue(idx string, result interface{}) bool {
+	defer recover()
 	data, ok := raw[idx]
 	if !ok {
 		log.Printf("JSON-ERROR: Message does not contain index %v", idx)

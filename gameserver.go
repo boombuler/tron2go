@@ -14,8 +14,6 @@ type GameServer struct {
 	*gameState
 }
 
-var gameserver *GameServer = NewGameServer()
-
 func NewGameServer() *GameServer {
 	result := &GameServer{
 		Register:   make(chan *connection),
@@ -157,12 +155,14 @@ func (gs *GameServer) run() {
 		case c := <-gs.Register:
 			go gs.onPlayerConnected(c)
 		case c := <-gs.Unregister:
-			if gs.Clients[c].Id > 0 {
-				gs.idStore.Free(gs.Clients[c].Id)
+			if cl, ok := gs.Clients[c]; ok {
+				if cl.Id > 0 {
+					gs.idStore.Free(gs.Clients[c].Id)
+				}
+				delete(gs.Clients, c)
+				close(c.send)
+				close(c.receive)
 			}
-			delete(gs.Clients, c)
-			close(c.send)
-			close(c.receive)
 		case m := <-gs.Broadcast:
 			for c, _ := range gs.Clients {
 				c.send <- m

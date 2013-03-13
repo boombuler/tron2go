@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"time"
+	"strconv"
 )
 
 const (
@@ -23,18 +24,21 @@ const (
 type connection struct {
 	// The websocket connection.
 	ws *websocket.Conn
+	room *GameServer
 
 	// Buffered channel of outbound messages.
 	send    chan []byte
 	receive chan []byte
 }
 
+func (c *connection) cleanup() {
+	c.room.Unregister <- c
+	c.ws.Close()
+}
+
 // readPump pumps messages from the websocket connection to the hub.
 func (c *connection) readPump() {
-	defer func() {
-		gameserver.Unregister <- c
-		c.ws.Close()
-	}()
+	defer c.cleanup();
 	c.ws.SetReadDeadline(time.Now().Add(readWait))
 	for {
 		op, r, err := c.ws.NextReader()
@@ -65,7 +69,7 @@ func (c *connection) writePump() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
-		c.ws.Close()
+		c.cleanup();
 	}()
 	for {
 		select {
@@ -95,6 +99,20 @@ func serveSocket(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Origin not allowed", 403)
 		return
 	}
+	log.Println(r.URL.RawQuery)
+
+	roomid, err := strconv.Atoi(r.URL.RawQuery)
+	if err != nil {
+		http.Error(w, "Room not found", 404)
+		return
+	}
+
+	room := roomserver.GetRoom(roomid)
+	if room == nil {
+		http.Error(w, "Room not found", 404)
+		return
+	}
+
 
 	ws, err := websocket.Upgrade(w, r.Header, "", 1024, 1024)
 
@@ -104,8 +122,8 @@ func serveSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c := &connection{send: make(chan []byte), receive: make(chan []byte), ws: ws}
-	gameserver.Register <- c
+	c := &connection{send: make(chan []byte), receive: make(chan []byte), ws: ws, room: room}
+	room.Register <- c
 	go c.writePump()
 	c.readPump()
 }

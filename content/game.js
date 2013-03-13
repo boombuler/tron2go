@@ -112,8 +112,8 @@ function setError(msg) {
     $('body').html('<div class="error-dlg-container"><div class="error-dlg">'+msg+'</div></div>')
 }
 
-function connect() {
-    conn = new WebSocket(WEBSOCKET_URL);
+function connect(roomid) {
+    conn = new WebSocket(WEBSOCKET_URL +'?'+ roomid);
     conn.onclose = function(evt) {
         setError('Disconnected.');
     }
@@ -158,7 +158,7 @@ function queryName() {
             localStorage.setItem("Nickname", Nickname)
         }
     }
-    connect();
+    connect(1);
 }
 
 
