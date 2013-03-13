@@ -148,7 +148,7 @@ func (c *Client) tryElevateTo(kind ClientKind) {
 	case Spectator:
 		if c.kind == Player {
 			c.kind = Spectator
-			c.server.idStore.Free(c.Id);
+			c.server.idStore.Free(c.Id)
 			c.Id = -1
 			c.conn.send <- c.SerializeIdentity()
 			if c.Alive {
@@ -191,15 +191,16 @@ func (c *Client) readInput() {
 			c.pushNewDirection(Down)
 		case "set.name":
 			var name string
-			if msgData.getValue("Name", &name) {
-				c.Name = name
-				if name == "" {
-					c.tryElevateTo(Spectator)
-				} else {
-					c.tryElevateTo(Player)
-				}
-				c.server.SendInitialState(nil) // Should be replaced with something that sends only the name
+			if !msgData.getValue("Name", &name) {
+				name = "Anonymous"
 			}
+			c.Name = name
+			if name == "" {
+				c.tryElevateTo(Spectator)
+			} else {
+				c.tryElevateTo(Player)
+			}
+			c.server.SendInitialState(nil) // Should be replaced with something that sends only the name
 		}
 	}
 }
