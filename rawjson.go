@@ -25,6 +25,11 @@ func (raw rawJson) getValue(idx string, result interface{}) bool {
 		log.Printf("JSON-ERROR: Message does not contain index %v", idx)
 		return false
 	}
+	if data == nil {
+		log.Printf("JSON-ERROR value is null")
+		return false
+	}
+
 	err := json.Unmarshal([]byte(*data), result)
 	if err != nil {
 		log.Printf("JSON-ERROR: %v", err.Error())
