@@ -158,7 +158,7 @@ func (gs *GameServer) run() {
 			go gs.onPlayerConnected(c)
 		case c := <-gs.Unregister:
 			if gs.Clients[c].Id > 0 {
-				gs.idStore.free <- gs.Clients[c].Id
+				gs.idStore.Free(gs.Clients[c].Id)
 			}
 			delete(gs.Clients, c)
 			close(c.send)
@@ -177,50 +177,4 @@ func (gs *GameServer) onPlayerConnected(c *connection) {
 	if gs.gameState != nil && gs.IsRunning {
 		gs.SendInitialState(c)
 	}
-}
-
-func (gs *GameServer) CanAcceptPlayer() bool {
-	select {
-	case id := <-gs.idStore.get:
-		gs.idStore.free <- id
-		return true
-	default:
-		return false
-	}
-	return false
-}
-
-type idStore struct {
-	get  <-chan int
-	free chan<- int
-}
-
-func createIdStore() *idStore {
-	get := make(chan int, len(PlayerColors))
-	free := make(chan int)
-
-	res := &idStore{get: get, free: free}
-
-	go func() {
-		for i := 0; i < len(PlayerColors); i++ {
-			get <- i
-		}
-		for {
-			select {
-			case id := <-free:
-				get <- id
-			}
-		}
-	}()
-	return res
-}
-
-func (ids *idStore) TryGet() int {
-	select {
-	case id := <-ids.get:
-		return id
-	default:
-		return -1
-	}
-	return -1
 }

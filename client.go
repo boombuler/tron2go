@@ -148,7 +148,7 @@ func (c *Client) tryElevateTo(kind ClientKind) {
 	case Spectator:
 		if c.kind == Player {
 			c.kind = Spectator
-			c.server.idStore.free <- c.Id
+			c.server.idStore.Free(c.Id);
 			c.Id = -1
 			c.conn.send <- c.SerializeIdentity()
 			if c.Alive {
