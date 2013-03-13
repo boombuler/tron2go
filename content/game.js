@@ -158,7 +158,7 @@ function queryName() {
             localStorage.setItem("Nickname", Nickname)
         }
     }
-    connect(1);
+    connect(0);
 }
 
 
