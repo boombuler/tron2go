@@ -88,7 +88,7 @@ func (gs *GameServer) calcRound() {
 	players := gs.getPlayers(false)
 
 	if !gs.IsRunning {
-		if len(players) == 0 {
+		if len(players) < 2 {
 			return
 		}
 		anyoneReady := false
@@ -121,7 +121,7 @@ func (gs *GameServer) calcRound() {
 				gs.IsRunning = true
 			}
 		}
-		return;
+		return
 	}
 
 	roundData := NewRound(gs)
