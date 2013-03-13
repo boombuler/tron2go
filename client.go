@@ -127,6 +127,9 @@ func (c *Client) AcceptInput() {
 }
 
 func (c *Client) pushNewDirection(dir Direction) {
+	if c.kind == Spectator {
+		c.tryElevateTo(Player)
+	}
 	if !c.server.IsRunning {
 		c.input.Clear()
 	}
@@ -147,6 +150,7 @@ func (c *Client) tryElevateTo(kind ClientKind) {
 			c.kind = Spectator
 			c.server.idStore.free <- c.Id
 			c.Id = -1
+			c.conn.send <- c.SerializeIdentity()
 			if c.Alive {
 				c.Alive = false
 				if !c.server.IsRunning {
@@ -158,6 +162,7 @@ func (c *Client) tryElevateTo(kind ClientKind) {
 		c.Id = c.server.idStore.TryGet()
 		if c.Id >= 0 {
 			c.kind = Player
+			c.conn.send <- c.SerializeIdentity()
 			if c.server.IsRunning {
 				c.Reset(false)
 			} else {
@@ -165,7 +170,6 @@ func (c *Client) tryElevateTo(kind ClientKind) {
 			}
 		}
 	}
-	c.conn.send <- c.SerializeIdentity()
 }
 
 func (c *Client) readInput() {
@@ -176,7 +180,6 @@ func (c *Client) readInput() {
 		if !msgData.getValue("Cmd", &cmd) {
 			continue
 		}
-		log.Println(cmd)
 		switch cmd {
 		case "move.left":
 			c.pushNewDirection(Left)

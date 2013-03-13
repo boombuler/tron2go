@@ -93,14 +93,37 @@ func (gs *GameServer) calcRound() {
 		if len(players) == 0 {
 			return
 		}
+		anyoneReady := false
+		allReady := true
+
 		for _, p := range players {
 			p.AcceptInput()
-			if p.Direction == NONE {
-				return
+			if p.Direction != NONE {
+				anyoneReady = true
+			} else {
+				allReady = false
 			}
 		}
-		gs.IsRunning = true
-		return
+
+		if allReady {
+			gs.IsRunning = true
+		} else if anyoneReady {
+			if gs.gameState.AutoStartTime == nil {
+				startAt := time.Now().Add(AUTOSTART_TIME)
+				gs.gameState.AutoStartTime = &startAt
+			} else if time.Now().After(*(gs.gameState.AutoStartTime)) {
+				log.Println("Autostart")
+				for _, p := range players {
+					if p.Direction == NONE {
+						p.Alive = false
+						p.tryElevateTo(Spectator)
+					}
+				}
+
+				gs.IsRunning = true
+			}
+		}
+		return;
 	}
 
 	roundData := NewRound(gs)

@@ -11,6 +11,7 @@ const (
 	WINNER_SCORE   uint   = 4
 	FIELD_WIDTH    int    = 200
 	FIELD_HEIGHT   int    = 200
+	AUTOSTART_TIME time.Duration = 5 * time.Second
 	SOCKET_PATH    string = "/socket/tron"
 	SPEED                 = (time.Second / 40)
 )
