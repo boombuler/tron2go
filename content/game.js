@@ -161,6 +161,21 @@ function queryName() {
     connect(0);
 }
 
+function translateBoardString(str) {
+    var flds = str.split(",");
+    var result = new Array()
+    for(var x = 0; x < FIELD_WIDTH; x++) {
+        for(var y = 0; y < FIELD_HEIGHT; y++) {
+            var spid = flds[(x * FIELD_HEIGHT) + y]
+            if (spid != '') {
+                var pid = parseInt(spid);
+                result.push({X: x, Y:y, PlayerId: pid});
+            }
+        }
+    }
+    return result;
+}
+
 
 $(function() {
     $('.game-screen').hide()
@@ -182,7 +197,7 @@ $(function() {
     $(document).bind('draw.gamestate', function(ev, data) {
         board = [];
         drawBoard();
-        drawBlocks(data.Blocks);
+        drawBlocks(translateBoardString(data.Board));
         updatePlayerList(data.Players);
     });
     $(document).bind('set.identity', function(ev, data) {

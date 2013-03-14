@@ -1,18 +1,16 @@
 package main
 
-import "encoding/json"
-import "log"
+import (
+	"encoding/json"
+	"log"
+	"bytes"
+	"strconv"
+)
 
 type NewBlock struct {
 	X        int
 	Y        int
 	PlayerId int
-}
-
-type GameStateData struct {
-	Event   string
-	Blocks  []NewBlock
-	Players []Client
 }
 
 type RoundData struct {
@@ -57,14 +55,26 @@ func (r *RoundData) Serialize() []byte {
 	return result
 }
 
-func (r *GameStateData) Serialize() []byte {
-	r.Event = "draw.gamestate"
+func SerializeGameState(clients []Client, board [][]*Client) []byte {
+	var buff bytes.Buffer
 
-	result, err := json.Marshal(r)
-	if err != nil {
-		log.Println(err.Error())
+	buff.WriteString("{\"Event\":\"draw.gamestate\",\"Players\":")
+	cl, _ := json.Marshal(clients)
+	buff.Write([]byte(cl))
+	buff.WriteString(",\"Board\":\"");
+
+	for x, col := range board {
+		for y, p := range col {
+			if x != 0 || y != 0 {
+				buff.WriteString(",")
+			}
+			if p != nil {
+				buff.WriteString(strconv.Itoa(p.Id))
+			}
+		}
 	}
-	return result
+	buff.WriteString("\"}")
+	return buff.Bytes()
 }
 
 func (rooms *RoomsData) Serialize() []byte {

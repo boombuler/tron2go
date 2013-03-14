@@ -50,25 +50,20 @@ func (gs *GameServer) gameLoop(endSignal chan bool) {
 }
 
 func (gs *GameServer) SendInitialState(c *connection) {
-	data := &GameStateData{Blocks: make([]NewBlock, 0), Players: make([]Client, 0)}
+	clients := make([]Client, 0)
 
 	for _, p := range gs.Clients {
 		if p.kind == Player {
-			data.Players = append(data.Players, *p)
+			clients = append(clients, *p)
 		}
 	}
 
-	for x, col := range gs.Board {
-		for y, p := range col {
-			if p != nil {
-				data.Blocks = append(data.Blocks, *&NewBlock{X: x, Y: y, PlayerId: p.Id})
-			}
-		}
-	}
+	data := SerializeGameState(clients, gs.gameState.Board)
+
 	if c != nil {
-		c.send <- data.Serialize()
+		c.send <- data
 	} else if len(gs.Clients) > 0 {
-		gs.Broadcast <- data.Serialize()
+		gs.Broadcast <- data
 	}
 }
 
