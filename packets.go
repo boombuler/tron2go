@@ -1,9 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"log"
-	"bytes"
 	"strconv"
 )
 
@@ -61,7 +61,7 @@ func SerializeGameState(clients []Client, board [][]*Client) []byte {
 	buff.WriteString("{\"Event\":\"draw.gamestate\",\"Players\":")
 	cl, _ := json.Marshal(clients)
 	buff.Write([]byte(cl))
-	buff.WriteString(",\"Board\":\"");
+	buff.WriteString(",\"Board\":\"")
 
 	for x, col := range board {
 		for y, p := range col {

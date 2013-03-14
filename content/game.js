@@ -114,6 +114,7 @@ function setError(msg) {
 
 function connect(roomid) {
     conn = new WebSocket(WEBSOCKET_URL +'?'+ roomid);
+    conn.binaryType = 'arraybuffer'
     conn.onclose = function(evt) {
         setError('Disconnected.');
     }
@@ -126,7 +127,7 @@ function connect(roomid) {
         conn.send(JSON.stringify({'Cmd' : 'set.name', 'Name': Nickname}))
     }
     conn.onmessage = function(evt) {
-        data = JSON.parse(evt.data)
+        data = JSON.parse(decodeServerMsg(evt.data))
         $(document).trigger(data.Event, data);
     }
 

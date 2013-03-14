@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"github.com/garyburd/go-websocket/websocket"
 	"io/ioutil"
 	"log"
@@ -64,6 +65,52 @@ func (c *connection) write(opCode int, payload []byte) error {
 	return c.ws.WriteMessage(opCode, payload)
 }
 
+func writeVarInt(buff *bytes.Buffer, val uint) {
+	for {
+		var nextB byte = byte(val) & 0x7F
+		val = val >> 7
+		if val != 0 {
+			nextB = nextB ^ 0x80
+			buff.WriteByte(nextB)
+		} else {
+			buff.WriteByte(nextB)
+			break
+		}
+	}
+}
+
+// Compress a string to a list of output symbols.
+func (c *connection) compress(uncompressed []byte) []byte {
+	// Build the dictionary.
+	dictSize := 256
+	dictionary := make(map[string]uint)
+	for i := 0; i < 256; i++ {
+		dictionary[string(i)] = uint(i)
+	}
+
+	w := ""
+	buffer := new(bytes.Buffer)
+
+	for _, c := range uncompressed {
+		wc := w + string(c)
+		if _, ok := dictionary[wc]; ok {
+			w = wc
+		} else {
+			writeVarInt(buffer, dictionary[w])
+			// Add wc to the dictionary.
+			dictionary[wc] = uint(dictSize)
+			dictSize++
+			w = string(c)
+		}
+	}
+
+	// Output the code for w.
+	if w != "" {
+		writeVarInt(buffer, dictionary[w])
+	}
+	return buffer.Bytes()
+}
+
 // writePump pumps messages from the hub to the websocket connection.
 func (c *connection) writePump() {
 	ticker := time.NewTicker(pingPeriod)
@@ -83,7 +130,7 @@ func (c *connection) writePump() {
 				c.write(websocket.OpClose, []byte{})
 				return
 			}
-			if err := c.write(websocket.OpText, message); err != nil {
+			if err := c.write(websocket.OpBinary, c.compress(message)); err != nil {
 				return
 			}
 		case <-ticker.C:
