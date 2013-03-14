@@ -18,6 +18,9 @@ var serverMessageHandler = {
     },
     "set.identity": function(data) {
          playerId = data.Id;
+    },
+    "draw.scoreboard": function(data) {
+        updatePlayerList(data.Players);
     }
 };
 

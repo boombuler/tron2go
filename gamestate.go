@@ -95,6 +95,7 @@ func (s *roundState) complete() []byte {
 		for _, p := range players {
 			p.Score += SURVIVER_SCORE
 		}
+		s.server.SendScoreboard()
 	}
 	return s.blocks.ToJson()
 }
