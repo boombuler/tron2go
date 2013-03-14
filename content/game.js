@@ -6,6 +6,21 @@ var board = [];
 var playerId;
 var Nickname = undefined;
 
+var serverMessageHandler = {
+    "draw.blocks": function(data) {
+        drawBlocks(data.Blocks)
+    },
+    "draw.gamestate": function(data) {
+        board = [];
+        drawBoard();
+        drawBlocks(translateBoardString(data.Board));
+        updatePlayerList(data.Players);
+    },
+    "set.identity": function(data) {
+         playerId = data.Id;
+    }
+};
+
 function drawBlocks(blocks) {
     $.each(blocks, function(idx, block) {
         if (canvasContext) {
@@ -128,7 +143,9 @@ function connect(roomid) {
     }
     conn.onmessage = function(evt) {
         data = JSON.parse(decodeServerMsg(evt.data))
-        $(document).trigger(data.Event, data);
+        if (serverMessageHandler[data.Event]) {
+            serverMessageHandler[data.Event](data);
+        }
     }
 
     var sendCommand = function (cmd) {
@@ -194,16 +211,7 @@ $(function() {
     canvasContext = canvas[0].getContext('2d');
 
     $(window).on('resize', onResize);
-    $(document).bind('draw.blocks', function(ev, data) { drawBlocks(data.Blocks) });
-    $(document).bind('draw.gamestate', function(ev, data) {
-        board = [];
-        drawBoard();
-        drawBlocks(translateBoardString(data.Board));
-        updatePlayerList(data.Players);
-    });
-    $(document).bind('set.identity', function(ev, data) {
-         playerId = data.Id;
-    });
+
     bindInput();
     queryName();
 });
