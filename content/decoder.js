@@ -53,5 +53,5 @@ function decodeServerMsg(arrBuffer) {
         w = entry;
         result += entry;
     }
-    return result;
+    return decodeURIComponent(escape(result)); // decode UTF8 string
 }
