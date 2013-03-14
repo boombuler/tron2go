@@ -1,6 +1,9 @@
 package main
 
-import "strconv"
+import (
+	"bytes"
+	"strconv"
+)
 
 type NewBlock struct {
 	X        int
@@ -62,19 +65,19 @@ func SerializeGameState(clients []Client, board [][]*Client) []byte {
 	}
 	jw.EndArray().Next()
 
-	str := ""
+	buff := new(bytes.Buffer)
 
 	for x, col := range board {
 		for y, p := range col {
 			if x != 0 || y != 0 {
-				str += ","
+				buff.WriteByte(',')
 			}
 			if p != nil {
-				str += strconv.Itoa(p.Id)
+				buff.WriteString(strconv.Itoa(p.Id))
 			}
 		}
 	}
-	jw.WriteStr("Board", str)
+	jw.WriteStr("Board", string(buff.Bytes()))
 
 	return jw.EndObj().Flush()
 }
