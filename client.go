@@ -17,6 +17,16 @@ type Client struct {
 	input  *InputQueue
 }
 
+func (c Client) ToJson() []byte {
+	jw := new(JsonWriter).StartObj()
+
+	jw.WriteInt("Id", c.Id).Next()
+	jw.WriteInt("Score", int(c.Score)).Next()
+	jw.WriteStr("Name", c.Name)
+
+	return jw.EndObj().Flush()
+}
+
 type playerState struct {
 	X         int
 	Y         int

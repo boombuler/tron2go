@@ -42,5 +42,5 @@ func (rs *RoomServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			rooms[idx].Players = append(rooms[idx].Players, *p)
 		}
 	}
-	w.Write(rooms.Serialize())
+	w.Write(rooms.ToJson())
 }

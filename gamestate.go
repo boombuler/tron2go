@@ -21,14 +21,14 @@ func NewGameState() *gameState {
 
 type roundState struct {
 	server        *GameServer
-	blocks        []NewBlock
+	blocks        RoundData
 	killedPlayers []*Client
 }
 
 func NewRound(gs *GameServer) *roundState {
 	return &roundState{
 		server:        gs,
-		blocks:        make([]NewBlock, 0),
+		blocks:        make(RoundData, 0),
 		killedPlayers: make([]*Client, 0),
 	}
 }
@@ -96,5 +96,5 @@ func (s *roundState) complete() []byte {
 			p.Score += SURVIVER_SCORE
 		}
 	}
-	return (&RoundData{Blocks: s.blocks}).Serialize()
+	return s.blocks.ToJson()
 }
