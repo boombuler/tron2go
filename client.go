@@ -210,7 +210,7 @@ func (c *Client) readInput() {
 			} else {
 				c.tryElevateTo(Player)
 			}
-			c.server.SendInitialState(nil) // Should be replaced with something that sends only the name
+			c.server.SendScoreboard()
 		}
 	}
 }

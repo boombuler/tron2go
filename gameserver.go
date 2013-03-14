@@ -67,6 +67,17 @@ func (gs *GameServer) SendInitialState(c *connection) {
 	}
 }
 
+func (gs *GameServer) SendScoreboard() {
+	clients := make([]Client, 0)
+
+	for _, p := range gs.Clients {
+		if p.kind == Player {
+			clients = append(clients, *p)
+		}
+	}
+	gs.Broadcast <- SerializeScoreboard(clients)
+}
+
 func (gs *GameServer) getPlayers(alive bool) []*Client {
 	res := make([]*Client, 0)
 	for _, c := range gs.Clients {
@@ -83,7 +94,7 @@ func (gs *GameServer) calcRound() {
 	players := gs.getPlayers(false)
 
 	if !gs.IsRunning {
-		if len(players) < 2 {
+		if len(players) < 1 {
 			return
 		}
 		anyoneReady := false
@@ -138,7 +149,7 @@ func (gs *GameServer) checkGameOver() {
 		}
 	}
 
-	if alivecount < 2 {
+	if alivecount < 1 {
 		gs.newGame()
 	}
 }

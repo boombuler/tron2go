@@ -82,6 +82,21 @@ func SerializeGameState(clients []Client, board [][]*Client) []byte {
 	return jw.EndObj().Flush()
 }
 
+func SerializeScoreboard(clients []Client) []byte {
+	jw := new(JsonWriter).StartObj()
+	jw.WriteStr("Event", "draw.scoreboard").Next()
+	jw.WriteIdent("Players").StartArray()
+	for i, p := range clients {
+		if i != 0 {
+			jw.Next()
+		}
+		jw.Write(p)
+	}
+	jw.EndArray()
+
+	return jw.EndObj().Flush()
+}
+
 type RoomData struct {
 	Id         int
 	MaxPlayers int
