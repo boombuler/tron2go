@@ -3,8 +3,8 @@ package main
 import "time"
 
 type gameState struct {
-	Board     [][]*Client
-	IsRunning bool
+	Board         [][]*Client
+	IsRunning     bool
 	AutoStartTime *time.Time
 }
 

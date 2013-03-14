@@ -27,9 +27,9 @@ type Identity struct {
 }
 
 type RoomData struct {
-	Id int
+	Id         int
 	MaxPlayers int
-	Players []Client
+	Players    []Client
 }
 
 type RoomsData []RoomData
@@ -67,7 +67,7 @@ func (r *GameStateData) Serialize() []byte {
 	return result
 }
 
-func (rooms *RoomsData) Serialize() []byte{
+func (rooms *RoomsData) Serialize() []byte {
 	result, err := json.Marshal(rooms)
 	if err != nil {
 		log.Println(err.Error())
