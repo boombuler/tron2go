@@ -11,7 +11,7 @@ func newRawJSON(data []byte) rawJson {
 	res := make(rawJson)
 	err := json.Unmarshal(data, &res)
 	if err != nil {
-		log.Println("JSON-ERROR: %v", err.Error())
+		log.Println("JSON-ERROR: ", err.Error())
 		return nil
 	}
 
@@ -22,7 +22,7 @@ func (raw rawJson) getValue(idx string, result interface{}) bool {
 	defer recover()
 	data, ok := raw[idx]
 	if !ok {
-		log.Println("JSON-ERROR: Message does not contain index %v", idx)
+		log.Println("JSON-ERROR: Message does not contain index ", idx)
 		return false
 	}
 	if data == nil {
@@ -32,7 +32,7 @@ func (raw rawJson) getValue(idx string, result interface{}) bool {
 
 	err := json.Unmarshal([]byte(*data), result)
 	if err != nil {
-		log.Println("JSON-ERROR: %v", err.Error())
+		log.Println("JSON-ERROR: ", err.Error())
 		return false
 	}
 	return true
