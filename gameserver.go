@@ -94,7 +94,7 @@ func (gs *GameServer) calcRound() {
 	players := gs.getPlayers(false)
 
 	if !gs.IsRunning {
-		if len(players) < 1 {
+		if len(players) < 2 {
 			return
 		}
 		anyoneReady := false
@@ -149,7 +149,7 @@ func (gs *GameServer) checkGameOver() {
 		}
 	}
 
-	if alivecount < 1 {
+	if alivecount < 2 {
 		gs.newGame()
 	}
 }
