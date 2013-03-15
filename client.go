@@ -190,7 +190,7 @@ func (c *Client) readInput() {
 		if !msgData.getValue("Cmd", &cmd) {
 			continue
 		}
-		log.Println(cmd)
+
 		switch cmd {
 		case "move.left":
 			c.pushNewDirection(Left)
