@@ -118,19 +118,19 @@ func (c *Client) AcceptInput() {
 	newDir := c.input.Pop()
 	switch newDir {
 	case Right:
-		if c.Direction != Left {
+		if c.Direction != Left || !c.server.IsRunning {
 			c.Direction = Right
 		}
 	case Left:
-		if c.Direction != Right {
+		if c.Direction != Right || !c.server.IsRunning {
 			c.Direction = Left
 		}
 	case Up:
-		if c.Direction != Down {
+		if c.Direction != Down || !c.server.IsRunning {
 			c.Direction = Up
 		}
 	case Down:
-		if c.Direction != Up {
+		if c.Direction != Up || !c.server.IsRunning {
 			c.Direction = Down
 		}
 	}
@@ -190,6 +190,7 @@ func (c *Client) readInput() {
 		if !msgData.getValue("Cmd", &cmd) {
 			continue
 		}
+		log.Println(cmd)
 		switch cmd {
 		case "move.left":
 			c.pushNewDirection(Left)
