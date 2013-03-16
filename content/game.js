@@ -2,6 +2,83 @@ var playerId;
 var Nickname = undefined;
 
 
+GameClient = function() {
+    var conn;
+
+
+    var serverMessageHandler = {
+        "draw.blocks": function(data) {
+            ArenaCanvas.drawBlocks(data.Blocks);
+        },
+        "draw.gamestate": function(data) {
+            ArenaCanvas.clear();
+            ArenaCanvas.drawBlocks(_translateBoardString(data.Board));
+
+            updatePlayerList(data.Players);
+        },
+        "set.identity": function(data) {
+            playerId = data.Id;
+        },
+        "draw.scoreboard": function(data) {
+            updatePlayerList(data.Players);
+        }
+    };
+
+    var _translateBoardString = function(str) {
+        var flds = str.split(",");
+        var result = new Array();
+        for(var x = 0; x < FIELD_WIDTH; x++) {
+            for(var y = 0; y < FIELD_HEIGHT; y++) {
+                var spid = flds[(x * FIELD_HEIGHT) + y]
+                if (spid != '') {
+                    var pid = parseInt(spid);
+                    result.push({X: x, Y:y, PlayerId: pid});
+                }
+            }
+        }
+        return result;
+    };
+
+    var _sendSetNameCommand = function(name) {
+        conn.send(JSON.stringify({ "Cmd" : "set.name", "Name": name }));
+    };
+
+    var _sendMoveCommand = function(direction) {
+        conn.send(JSON.stringify({ "Cmd": "move." + direction }));
+    };
+
+    return {
+        connect: function(url, roomId) {
+            conn = new WebSocket(url +'?'+ roomId);
+            conn.binaryType = 'arraybuffer';
+            conn.onclose = function(evt) {
+                setError('Disconnected');
+            }
+            conn.onerror = function(evt) {
+                setError('ERROR: ' + evt);
+            }
+            conn.onopen = function(evt) {
+                $('.game-screen').show();
+                onResize();
+
+                _sendSetNameCommand(Nickname);
+            }
+            conn.onmessage = function(evt) {
+                var data = JSON.parse(decodeServerMsg(evt.data));
+                if (serverMessageHandler[data.Event]) {
+                    serverMessageHandler[data.Event](data);
+                }
+            }
+
+            $(document).bind('move.right', function() { _sendMoveCommand('right'); });
+            $(document).bind('move.left', function() { _sendMoveCommand('left'); });
+            $(document).bind('move.up', function() { _sendMoveCommand('up'); });
+            $(document).bind('move.down', function() { _sendMoveCommand('down'); });
+        }
+    };
+}();
+
+
 ArenaCanvas = function() {
     var canvas;
     var ctx;
@@ -70,23 +147,6 @@ ArenaCanvas = function() {
     };
 }();
 
-
-var serverMessageHandler = {
-    "draw.blocks": function(data) {
-        ArenaCanvas.drawBlocks(data.Blocks)
-    },
-    "draw.gamestate": function(data) {
-        ArenaCanvas.clear();
-        ArenaCanvas.drawBlocks(translateBoardString(data.Board));
-        updatePlayerList(data.Players);
-    },
-    "set.identity": function(data) {
-        playerId = data.Id;
-    },
-    "draw.scoreboard": function(data) {
-        updatePlayerList(data.Players);
-    }
-};
 
 function updatePlayerList(players) {
     players.sort(function(a, b) { return b.Score - a.Score; })
@@ -164,37 +224,6 @@ function setError(msg) {
     $('body').html('<div class="error-dlg-container"><div class="error-dlg">'+msg+'</div></div>')
 }
 
-function connect(roomid) {
-    conn = new WebSocket(WEBSOCKET_URL +'?'+ roomid);
-    conn.binaryType = 'arraybuffer'
-    conn.onclose = function(evt) {
-        setError('Disconnected.');
-    }
-    conn.onerror = function(evt) {
-        setError('ERROR: '+ evt);
-    }
-    conn.onopen = function(evt) {
-        $('.game-screen').show()
-        onResize();
-        conn.send(JSON.stringify({'Cmd' : 'set.name', 'Name': Nickname}))
-    }
-    conn.onmessage = function(evt) {
-        data = JSON.parse(decodeServerMsg(evt.data))
-        if (serverMessageHandler[data.Event]) {
-            serverMessageHandler[data.Event](data);
-        }
-    }
-
-    var sendCommand = function (cmd) {
-        conn.send(JSON.stringify({'Cmd': cmd}))
-    }
-
-    $(document).bind('move.right', function() { sendCommand('move.right'); });
-    $(document).bind('move.left', function() { sendCommand('move.left'); });
-    $(document).bind('move.up', function() { sendCommand('move.up'); });
-    $(document).bind('move.down', function() { sendCommand('move.down'); });
-}
-
 function allowLocalStorage() {
     try {
         return 'localStorage' in window && window['localStorage'] !== null;
@@ -213,34 +242,20 @@ function queryName() {
             localStorage.setItem("Nickname", Nickname)
         }
     }
-    connect(0);
-}
-
-function translateBoardString(str) {
-    var flds = str.split(",");
-    var result = new Array()
-    for(var x = 0; x < FIELD_WIDTH; x++) {
-        for(var y = 0; y < FIELD_HEIGHT; y++) {
-            var spid = flds[(x * FIELD_HEIGHT) + y]
-            if (spid != '') {
-                var pid = parseInt(spid);
-                result.push({X: x, Y:y, PlayerId: pid});
-            }
-        }
-    }
-    return result;
+    GameClient.connect(WEBSOCKET_URL, 0);
 }
 
 
 $(function() {
-    $('.game-screen').hide()
+    $('.game-screen').hide();
+
     if (!window['WebSocket']) {
-       setError('Your browser does not support WebSockets.');
+       setError('Your browser does not support WebSockets');
        return;
     }
 
     if (!ArenaCanvas.init('#arena', FIELD_WIDTH, FIELD_HEIGHT)) {
-       setError('Your browser does not support canvas elements.');
+       setError('Your browser does not support canvas elements');
        return;
     }
 
