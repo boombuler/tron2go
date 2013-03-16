@@ -1,51 +1,92 @@
-var playerThickness;
-var canvas;
-var canvasContext;
-
-var board = [];
 var playerId;
 var Nickname = undefined;
 
+
+ArenaCanvas = function() {
+    var canvas;
+    var ctx;
+
+    var playerThickness = 1;
+
+    var boardCols;
+    var boardRows;
+    var board = [];
+
+
+    var _repaint = function() {
+        var b = board;
+        ArenaCanvas.clear();
+        ArenaCanvas.drawBlocks(b)
+    };
+
+    return {
+        init: function(el, cols, rows) {
+            boardCols = cols;
+            boardRows = rows;
+
+            canvas = $(el);
+            if ((canvas.length < 1) || !canvas[0].getContext) {
+               return false;
+            }
+
+            ctx = canvas[0].getContext('2d');
+            ArenaCanvas.clear();
+
+            return true;
+        },
+
+        onResize: function(maxWidth, maxHeight) {
+            playerThickness = Math.floor(Math.min(maxWidth / boardCols, maxHeight / boardRows));
+            if (playerThickness < 1) {
+                playerThickness = 1;
+            }
+
+            canvas.prop('width', boardCols * playerThickness);
+            canvas.prop('height', boardRows * playerThickness);
+
+            _repaint();
+        },
+
+        clear: function() {
+            board = [];
+            if (ctx) {
+                ctx.clearRect(0, 0, canvas.prop('width'), canvas.prop('height'));
+            }
+        },
+
+        drawBlocks: function(blocks) {
+            $.each(blocks, function(idx, block) {
+                if (ctx) {
+                    ctx.fillStyle = PLAYER_COLORS[block.PlayerId];
+                    ctx.fillRect(block.X * playerThickness,
+                        block.Y * playerThickness,
+                        playerThickness,
+                        playerThickness);
+                }
+
+                board.push(block);
+            });
+        }
+    };
+}();
+
+
 var serverMessageHandler = {
     "draw.blocks": function(data) {
-        drawBlocks(data.Blocks)
+        ArenaCanvas.drawBlocks(data.Blocks)
     },
     "draw.gamestate": function(data) {
-        board = [];
-        drawBoard();
-        drawBlocks(translateBoardString(data.Board));
+        ArenaCanvas.clear();
+        ArenaCanvas.drawBlocks(translateBoardString(data.Board));
         updatePlayerList(data.Players);
     },
     "set.identity": function(data) {
-         playerId = data.Id;
+        playerId = data.Id;
     },
     "draw.scoreboard": function(data) {
         updatePlayerList(data.Players);
     }
 };
-
-function drawBlocks(blocks) {
-    $.each(blocks, function(idx, block) {
-        if (canvasContext) {
-            canvasContext.fillStyle = PLAYER_COLORS[block.PlayerId];
-            canvasContext.fillRect(block.X * playerThickness,
-                block.Y * playerThickness,
-                playerThickness,
-                playerThickness);
-        }
-
-        board.push(block);
-    });
-}
-
-function drawBoard() {
-    if (canvasContext) {
-        canvasContext.clearRect(0, 0, canvas.prop('width'), canvas.prop('height'));
-    }
-    var b = board;
-    board = []
-    drawBlocks(b)
-}
 
 function updatePlayerList(players) {
     players.sort(function(a, b) { return b.Score - a.Score; })
@@ -75,31 +116,24 @@ function onResize() {
 
     var maxCanvasWidth = gameScreen.width() - playersDiv.outerWidth() - 16;
     var maxCanvasHeight = gameScreen.height() - 16;
-    playerThickness = Math.floor(Math.min(maxCanvasWidth / FIELD_WIDTH, maxCanvasHeight / FIELD_HEIGHT));
-    if (playerThickness < 1) {
-        playerThickness = 1;
-    }
+    ArenaCanvas.onResize(maxCanvasWidth, maxCanvasHeight);
 
-    canvas.prop('width', FIELD_WIDTH * playerThickness);
-    canvas.prop('height', FIELD_HEIGHT * playerThickness);
-
-    playersDiv.css('height', canvas.prop('height'));
+    playersDiv.css('height', $('#arena').prop('height'));
 
     gameContent.css({
         top: Math.max(((gameScreen.height() / 2) - (gameContent.outerHeight() / 2)), 5),
         left: Math.max(((gameScreen.width() / 2) - (gameContent.outerWidth() / 2)), 5)
     });
-
-    drawBoard();
 }
 
 function handleTouch(ev) {
     var x = ev.originalEvent.touches[0].pageX;
     var y = ev.originalEvent.touches[0].pageY;
 
-    var canvasOffset = canvas.offset();
-    var centerX = canvasOffset.left + (canvas.prop('width') / 2.0);
-    var centerY = canvasOffset.top + (canvas.prop('height') / 2.0);
+    var arena = $('#arena');
+    var arenaOffset = arena.offset();
+    var centerX = arenaOffset.left + (arena.prop('width') / 2.0);
+    var centerY = arenaOffset.top + (arena.prop('height') / 2.0);
 
     var deltaLeft  = x < centerX ? centerX - x : 0;
     var deltaUp    = y < centerY ? centerY - y : 0;
@@ -205,13 +239,10 @@ $(function() {
        return;
     }
 
-    canvas = $('#arena');
-    if ((canvas.length < 1) || !canvas[0].getContext) {
+    if (!ArenaCanvas.init('#arena', FIELD_WIDTH, FIELD_HEIGHT)) {
        setError('Your browser does not support canvas elements.');
        return;
     }
-
-    canvasContext = canvas[0].getContext('2d');
 
     $(window).on('resize', onResize);
 
