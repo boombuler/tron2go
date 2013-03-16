@@ -1,4 +1,6 @@
-GamePlayer = function() {
+var Tron = window.Tron || {};
+
+Tron.Player = function() {
     var playerId;
     var playerName;
 
@@ -38,7 +40,7 @@ GamePlayer = function() {
 }();
 
 
-GamePlayerList = function() {
+Tron.PlayerList = function() {
     return {
         update: function(players) {
             players.sort(function(a, b) { return b.Score - a.Score; })
@@ -49,7 +51,7 @@ GamePlayerList = function() {
             var list = $('<ul>');
             $.each(players, function(idx, player) {
                 var listItem = $('<li>').css('color', PLAYER_COLORS[player.Id]);
-                if (player.Id == GamePlayer.getId()) {
+                if (player.Id == Tron.Player.getId()) {
                     listItem.addClass('player-myself');
                 }
 
@@ -64,25 +66,25 @@ GamePlayerList = function() {
 }();
 
 
-GameClient = function() {
+Tron.Client = function() {
     var conn;
 
 
     var serverMessageHandler = {
         "draw.blocks": function(data) {
-            ArenaCanvas.drawBlocks(data.Blocks);
+            Tron.ArenaCanvas.drawBlocks(data.Blocks);
         },
         "draw.gamestate": function(data) {
-            GamePlayerList.update(data.Players);
+            Tron.PlayerList.update(data.Players);
 
-            ArenaCanvas.clear();
-            ArenaCanvas.drawBlocks(_translateBoardString(data.Board));
+            Tron.ArenaCanvas.clear();
+            Tron.ArenaCanvas.drawBlocks(_translateBoardString(data.Board));
         },
         "set.identity": function(data) {
-            GamePlayer.setId(data.Id);
+            Tron.Player.setId(data.Id);
         },
         "draw.scoreboard": function(data) {
-            GamePlayerList.update(data.Players);
+            Tron.PlayerList.update(data.Players);
         }
     };
 
@@ -123,7 +125,7 @@ GameClient = function() {
                 $('.game-screen').show();
                 onResize();
 
-                _sendSetNameCommand(GamePlayer.getName());
+                _sendSetNameCommand(Tron.Player.getName());
             }
             conn.onmessage = function(evt) {
                 var data = JSON.parse(decodeServerMsg(evt.data));
@@ -141,7 +143,7 @@ GameClient = function() {
 }();
 
 
-GameInput = function() {
+Tron.Input = function() {
     var _handleTouch = function(ev) {
         var x = ev.originalEvent.touches[0].pageX;
         var y = ev.originalEvent.touches[0].pageY;
@@ -180,7 +182,7 @@ GameInput = function() {
 }();
 
 
-ArenaCanvas = function() {
+Tron.ArenaCanvas = function() {
     var canvas;
     var ctx;
 
@@ -193,8 +195,8 @@ ArenaCanvas = function() {
 
     var _repaint = function() {
         var b = board;
-        ArenaCanvas.clear();
-        ArenaCanvas.drawBlocks(b)
+        Tron.ArenaCanvas.clear();
+        Tron.ArenaCanvas.drawBlocks(b)
     };
 
     return {
@@ -208,7 +210,7 @@ ArenaCanvas = function() {
             }
 
             ctx = canvas[0].getContext('2d');
-            ArenaCanvas.clear();
+            Tron.ArenaCanvas.clear();
 
             return true;
         },
@@ -256,7 +258,7 @@ function onResize() {
 
     var maxCanvasWidth = gameScreen.width() - playersDiv.outerWidth() - 16;
     var maxCanvasHeight = gameScreen.height() - 16;
-    ArenaCanvas.onResize(maxCanvasWidth, maxCanvasHeight);
+    Tron.ArenaCanvas.onResize(maxCanvasWidth, maxCanvasHeight);
 
     playersDiv.css('height', $('#arena').prop('height'));
 
@@ -271,11 +273,11 @@ function setError(msg) {
 }
 
 function queryName() {
-    if (!GamePlayer.getName()) {
-        GamePlayer.setName(prompt("Name: "));
+    if (!Tron.Player.getName()) {
+        Tron.Player.setName(prompt("Name: "));
     }
 
-    GameClient.connect(WEBSOCKET_URL, 0);
+    Tron.Client.connect(WEBSOCKET_URL, 0);
 }
 
 
@@ -287,13 +289,13 @@ $(function() {
        return;
     }
 
-    if (!ArenaCanvas.init('#arena', FIELD_WIDTH, FIELD_HEIGHT)) {
+    if (!Tron.ArenaCanvas.init('#arena', FIELD_WIDTH, FIELD_HEIGHT)) {
        setError('Your browser does not support canvas elements');
        return;
     }
 
-    GamePlayer.loadConfig();
-    GameInput.init();
+    Tron.Player.loadConfig();
+    Tron.Input.init();
 
     $(window).on('resize', onResize);
 
