@@ -1,5 +1,67 @@
-var playerId;
-var Nickname = undefined;
+GamePlayer = function() {
+    var playerId;
+    var playerName;
+
+
+    var _allowLocalStorage = function() {
+        try {
+            return 'localStorage' in window && window['localStorage'] !== null;
+        } catch (e) {
+            return false;
+        }
+    };
+
+    return {
+        loadConfig: function() {
+            if (_allowLocalStorage()) {
+                playerName = localStorage.getItem("Nickname")
+            }
+        },
+
+        getId: function() {
+            return playerId;
+        },
+        setId: function(id) {
+            playerId = id;
+        },
+
+        getName: function() {
+            return playerName;
+        },
+        setName: function(name) {
+            playerName = name;
+            if (_allowLocalStorage()) {
+                localStorage.setItem("Nickname", playerName)
+            }
+        }
+    };
+}();
+
+
+GamePlayerList = function() {
+    return {
+        update: function(players) {
+            players.sort(function(a, b) { return b.Score - a.Score; })
+
+            var playersDiv = $('#players');
+            playersDiv.empty();
+
+            var list = $('<ul>');
+            $.each(players, function(idx, player) {
+                var listItem = $('<li>').css('color', PLAYER_COLORS[player.Id]);
+                if (player.Id == GamePlayer.getId()) {
+                    listItem.addClass('player-myself');
+                }
+
+                $('<span>').addClass('player-name').text(player.Name).appendTo(listItem);
+                $('<span>').addClass('player-score').text(player.Score).appendTo(listItem);
+
+                listItem.appendTo(list);
+            });
+            list.appendTo(playersDiv);
+        }
+    };
+}();
 
 
 GameClient = function() {
@@ -11,16 +73,16 @@ GameClient = function() {
             ArenaCanvas.drawBlocks(data.Blocks);
         },
         "draw.gamestate": function(data) {
+            GamePlayerList.update(data.Players);
+
             ArenaCanvas.clear();
             ArenaCanvas.drawBlocks(_translateBoardString(data.Board));
-
-            updatePlayerList(data.Players);
         },
         "set.identity": function(data) {
-            playerId = data.Id;
+            GamePlayer.setId(data.Id);
         },
         "draw.scoreboard": function(data) {
-            updatePlayerList(data.Players);
+            GamePlayerList.update(data.Players);
         }
     };
 
@@ -61,7 +123,7 @@ GameClient = function() {
                 $('.game-screen').show();
                 onResize();
 
-                _sendSetNameCommand(Nickname);
+                _sendSetNameCommand(GamePlayer.getName());
             }
             conn.onmessage = function(evt) {
                 var data = JSON.parse(decodeServerMsg(evt.data));
@@ -187,27 +249,6 @@ ArenaCanvas = function() {
 }();
 
 
-function updatePlayerList(players) {
-    players.sort(function(a, b) { return b.Score - a.Score; })
-
-    var playersDiv = $('#players');
-    playersDiv.empty();
-
-    var list = $('<ul>');
-    $.each(players, function(idx, player) {
-        var listItem = $('<li>').css('color', PLAYER_COLORS[player.Id]);
-        if (player.Id == playerId) {
-            listItem.addClass('player-myself');
-        }
-
-        $('<span>').addClass('player-name').text(player.Name).appendTo(listItem);
-        $('<span>').addClass('player-score').text(player.Score).appendTo(listItem);
-
-        listItem.appendTo(list);
-    });
-    list.appendTo(playersDiv);
-}
-
 function onResize() {
     var gameScreen = $('.game-screen');
     var gameContent = $('.game-content');
@@ -229,24 +270,11 @@ function setError(msg) {
     $('body').html('<div class="error-dlg-container"><div class="error-dlg">'+msg+'</div></div>')
 }
 
-function allowLocalStorage() {
-    try {
-        return 'localStorage' in window && window['localStorage'] !== null;
-    } catch (e) {
-        return false;
-    }
-}
-
 function queryName() {
-    if (allowLocalStorage()) {
-        Nickname = localStorage.getItem("Nickname")
+    if (!GamePlayer.getName()) {
+        GamePlayer.setName(prompt("Name: "));
     }
-    if (!Nickname) {
-        Nickname = prompt("Name: ");
-        if (allowLocalStorage()) {
-            localStorage.setItem("Nickname", Nickname)
-        }
-    }
+
     GameClient.connect(WEBSOCKET_URL, 0);
 }
 
@@ -264,6 +292,7 @@ $(function() {
        return;
     }
 
+    GamePlayer.loadConfig();
     GameInput.init();
 
     $(window).on('resize', onResize);
