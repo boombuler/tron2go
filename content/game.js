@@ -79,6 +79,45 @@ GameClient = function() {
 }();
 
 
+GameInput = function() {
+    var _handleTouch = function(ev) {
+        var x = ev.originalEvent.touches[0].pageX;
+        var y = ev.originalEvent.touches[0].pageY;
+
+        var arena = $('#arena');
+        var arenaOffset = arena.offset();
+        var centerX = arenaOffset.left + (arena.prop('width') / 2.0);
+        var centerY = arenaOffset.top + (arena.prop('height') / 2.0);
+
+        var deltaLeft  = x < centerX ? centerX - x : 0;
+        var deltaUp    = y < centerY ? centerY - y : 0;
+        var deltaRight = x > centerX ? x - centerX : 0;
+        var deltaDown  = y > centerY ? y - centerY : 0;
+
+        var maxDelta = Math.max(deltaLeft, deltaUp, deltaDown, deltaRight);
+        if (deltaLeft == maxDelta)
+            $(document).trigger('move.left');
+        else if (deltaRight == maxDelta)
+            $(document).trigger('move.right');
+        else if (deltaDown == maxDelta)
+            $(document).trigger('move.down');
+        else if (deltaUp == maxDelta)
+            $(document).trigger('move.up');
+    };
+
+    return {
+        init: function() {
+            $(document).bind('keydown.right', function(){ $(document).trigger('move.right'); });
+            $(document).bind('keydown.left', function(){ $(document).trigger('move.left'); });
+            $(document).bind('keydown.up', function(){ $(document).trigger('move.up'); });
+            $(document).bind('keydown.down', function(){ $(document).trigger('move.down'); });
+
+            $(document).bind('touchstart', _handleTouch);
+        }
+    };
+}();
+
+
 ArenaCanvas = function() {
     var canvas;
     var ctx;
@@ -186,40 +225,6 @@ function onResize() {
     });
 }
 
-function handleTouch(ev) {
-    var x = ev.originalEvent.touches[0].pageX;
-    var y = ev.originalEvent.touches[0].pageY;
-
-    var arena = $('#arena');
-    var arenaOffset = arena.offset();
-    var centerX = arenaOffset.left + (arena.prop('width') / 2.0);
-    var centerY = arenaOffset.top + (arena.prop('height') / 2.0);
-
-    var deltaLeft  = x < centerX ? centerX - x : 0;
-    var deltaUp    = y < centerY ? centerY - y : 0;
-    var deltaRight = x > centerX ? x - centerX : 0;
-    var deltaDown  = y > centerY ? y - centerY : 0;
-
-    var maxDelta = Math.max(deltaLeft, deltaUp, deltaDown, deltaRight);
-    if (deltaLeft == maxDelta)
-        $(document).trigger('move.left');
-    else if (deltaRight == maxDelta)
-        $(document).trigger('move.right');
-    else if (deltaDown == maxDelta)
-        $(document).trigger('move.down');
-    else if (deltaUp == maxDelta)
-        $(document).trigger('move.up');
-}
-
-function bindInput() {
-    $(document).bind('keydown.right', function(){ $(document).trigger('move.right'); });
-    $(document).bind('keydown.left', function(){ $(document).trigger('move.left'); });
-    $(document).bind('keydown.up', function(){ $(document).trigger('move.up'); });
-    $(document).bind('keydown.down', function(){ $(document).trigger('move.down'); });
-
-    $(document).bind('touchstart', handleTouch)
-}
-
 function setError(msg) {
     $('body').html('<div class="error-dlg-container"><div class="error-dlg">'+msg+'</div></div>')
 }
@@ -259,8 +264,9 @@ $(function() {
        return;
     }
 
+    GameInput.init();
+
     $(window).on('resize', onResize);
 
-    bindInput();
     queryName();
 });
