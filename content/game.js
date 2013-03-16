@@ -94,11 +94,12 @@ function onResize() {
 }
 
 function handleTouch(ev) {
-    var x = ev.originalEvent.touches[0].clientX;
-    var y = ev.originalEvent.touches[0].clientY;
+    var x = ev.originalEvent.touches[0].pageX;
+    var y = ev.originalEvent.touches[0].pageY;
 
-    var centerX = (canvas.prop('width') / 2.0);
-    var centerY = (canvas.prop('height') / 2.0);
+    var canvasOffset = canvas.offset();
+    var centerX = canvasOffset.left + (canvas.prop('width') / 2.0);
+    var centerY = canvasOffset.top + (canvas.prop('height') / 2.0);
 
     var deltaLeft  = x < centerX ? centerX - x : 0;
     var deltaUp    = y < centerY ? centerY - y : 0;
@@ -114,7 +115,6 @@ function handleTouch(ev) {
         $(document).trigger('move.down');
     else if (deltaUp == maxDelta)
         $(document).trigger('move.up');
-    ev.preventDefault()
 }
 
 function bindInput() {
@@ -123,7 +123,7 @@ function bindInput() {
     $(document).bind('keydown.up', function(){ $(document).trigger('move.up'); });
     $(document).bind('keydown.down', function(){ $(document).trigger('move.down'); });
 
-    canvas.bind('touchstart', handleTouch)
+    $(document).bind('touchstart', handleTouch)
 }
 
 function setError(msg) {
