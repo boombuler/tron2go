@@ -116,14 +116,13 @@ Tron.Client = function() {
             conn = new WebSocket(url +'?'+ roomId);
             conn.binaryType = 'arraybuffer';
             conn.onclose = function(evt) {
-                setError('Disconnected');
+                Tron.Screen.showError('Disconnected');
             }
             conn.onerror = function(evt) {
-                setError('ERROR: ' + evt);
+                Tron.Screen.showError('ERROR: ' + evt);
             }
             conn.onopen = function(evt) {
-                $('.game-screen').show();
-                onResize();
+                Tron.Screen.showGame();
 
                 _sendSetNameCommand(Tron.Player.getName());
             }
@@ -251,53 +250,84 @@ Tron.ArenaCanvas = function() {
 }();
 
 
-function onResize() {
-    var gameScreen = $('.game-screen');
-    var gameContent = $('.game-content');
-    var playersDiv = $('#players');
+Tron.Screen = function() {
+    var _showScreen = function(screenId) {
+        $('.game-screen-active').removeClass('game-screen-active');
+        $('#' + screenId).addClass('game-screen-active');
+        _onResize();
+    };
 
-    var maxCanvasWidth = gameScreen.width() - playersDiv.outerWidth() - 16;
-    var maxCanvasHeight = gameScreen.height() - 16;
-    Tron.ArenaCanvas.onResize(maxCanvasWidth, maxCanvasHeight);
+    var _onResize = function() {
+        var gameScreen = $('#game');
+        if (gameScreen.is(':visible')) {
+            var gameContent = $('.game-content', gameScreen);
+            var playersDiv = $('#players');
 
-    playersDiv.css('height', $('#arena').prop('height'));
+            var maxCanvasWidth = gameScreen.width() - playersDiv.outerWidth() - 16;
+            var maxCanvasHeight = gameScreen.height() - 16;
+            Tron.ArenaCanvas.onResize(maxCanvasWidth, maxCanvasHeight);
 
-    gameContent.css({
-        top: Math.max(((gameScreen.height() / 2) - (gameContent.outerHeight() / 2)), 5),
-        left: Math.max(((gameScreen.width() / 2) - (gameContent.outerWidth() / 2)), 5)
-    });
-}
+            playersDiv.css('height', $('#arena').prop('height'));
 
-function setError(msg) {
-    $('body').html('<div class="error-dlg-container"><div class="error-dlg">'+msg+'</div></div>')
-}
+            gameContent.css({
+                top: Math.max(((gameScreen.height() / 2) - (gameContent.outerHeight() / 2)), 5),
+                left: Math.max(((gameScreen.width() / 2) - (gameContent.outerWidth() / 2)), 5)
+            });
+        }
+    };
 
-function queryName() {
-    if (!Tron.Player.getName()) {
-        Tron.Player.setName(prompt("Name: "));
-    }
+    return {
+        init: function() {
+            $(window).on('resize', _onResize);
+        },
 
-    Tron.Client.connect(WEBSOCKET_URL, 0);
-}
+        showGame: function() {
+            _showScreen('game');
+        },
 
+        showError: function(msg) {
+            $('#error-message').text(msg);
+            _showScreen('error');
+        }
+    };
+}();
+
+
+Tron.Game = function() {
+    return {
+        init: function() {
+            if (!window['WebSocket']) {
+               Tron.Screen.showError('Your browser does not support WebSockets');
+               return;
+            }
+
+            if (!Tron.ArenaCanvas.init('#arena', FIELD_WIDTH, FIELD_HEIGHT)) {
+               Tron.Screen.showError('Your browser does not support canvas elements');
+               return;
+            }
+
+            Tron.Player.loadConfig();
+            Tron.Input.init();
+            Tron.Screen.init();
+
+            if (Tron.Player.getName()) {
+                Tron.Game.startGame();
+            } else {
+                Tron.Game.showPlayerConfig();
+            }
+        },
+
+        showPlayerConfig: function() {
+            Tron.Player.setName(prompt("Name: "));
+            Tron.Game.startGame();
+        },
+
+        startGame: function() {
+            Tron.Client.connect(WEBSOCKET_URL, 0);
+        }
+    };
+}();
 
 $(function() {
-    $('.game-screen').hide();
-
-    if (!window['WebSocket']) {
-       setError('Your browser does not support WebSockets');
-       return;
-    }
-
-    if (!Tron.ArenaCanvas.init('#arena', FIELD_WIDTH, FIELD_HEIGHT)) {
-       setError('Your browser does not support canvas elements');
-       return;
-    }
-
-    Tron.Player.loadConfig();
-    Tron.Input.init();
-
-    $(window).on('resize', onResize);
-
-    queryName();
+    Tron.Game.init();
 });
