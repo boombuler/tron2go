@@ -14,15 +14,29 @@
     </head>
 
     <body>
-        <div id="game" class="game-screen">
-            <div class="game-content">
-                <div id="players"></div>
+        <div id="joingame-screen" class="screen">
+            <div class="content">
+                <form action="#" onsubmit="Tron.Game.joinGame(0); return false;">
+                    <label for="input-playername">Player Name:</label>
+                    <input id="input-playername" name="name" type="text" autofocus="autofocus" />
+                    <button type="submit">Join Game</button>
+                </form>
+            </div>
+        </div>
+        <div id="game-screen" class="screen">
+            <div class="content">
+                <div id="players">
+                    <ul></ul>
+                    <div class="buttons">
+                        <button onclick="Tron.Game.logout()">Logout</button>
+                    </div>
+                </div>
                 <canvas id="arena"></canvas>
             </div>
         </div>
-        <div id="error" class="game-screen">
-            <div class="error-dlg-container">
-                <div id="error-message" class="error-dlg">
+        <div id="error-screen" class="screen">
+            <div class="content">
+                <div id="error-message">
                 </div>
             </div>
         </div>

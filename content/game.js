@@ -46,9 +46,9 @@ Tron.PlayerList = function() {
             players.sort(function(a, b) { return b.Score - a.Score; })
 
             var playersDiv = $('#players');
-            playersDiv.empty();
 
-            var list = $('<ul>');
+            var list = $('ul', playersDiv);
+            list.empty();
             $.each(players, function(idx, player) {
                 var listItem = $('<li>').css('color', PLAYER_COLORS[player.Id]);
                 if (player.Id == Tron.Player.getId()) {
@@ -60,7 +60,6 @@ Tron.PlayerList = function() {
 
                 listItem.appendTo(list);
             });
-            list.appendTo(playersDiv);
         }
     };
 }();
@@ -116,7 +115,7 @@ Tron.Client = function() {
             conn = new WebSocket(url +'?'+ roomId);
             conn.binaryType = 'arraybuffer';
             conn.onclose = function(evt) {
-                Tron.Screen.showError('Disconnected');
+                Tron.Screen.showJoinGame();
             }
             conn.onerror = function(evt) {
                 Tron.Screen.showError('ERROR: ' + evt);
@@ -137,6 +136,10 @@ Tron.Client = function() {
             $(document).bind('move.left', function() { _sendMoveCommand('left'); });
             $(document).bind('move.up', function() { _sendMoveCommand('up'); });
             $(document).bind('move.down', function() { _sendMoveCommand('down'); });
+        },
+
+        disconnect: function() {
+            conn.close();
         }
     };
 }();
@@ -252,22 +255,22 @@ Tron.ArenaCanvas = function() {
 
 Tron.Screen = function() {
     var _showScreen = function(screenId) {
-        $('.game-screen-active').removeClass('game-screen-active');
-        $('#' + screenId).addClass('game-screen-active');
+        $('.screen-active').removeClass('screen-active');
+        $('#' + screenId).addClass('screen-active');
         _onResize();
     };
 
     var _onResize = function() {
-        var gameScreen = $('#game');
+        var gameScreen = $('#game-screen');
         if (gameScreen.is(':visible')) {
-            var gameContent = $('.game-content', gameScreen);
+            var gameContent = $('.content', gameScreen);
             var playersDiv = $('#players');
 
             var maxCanvasWidth = gameScreen.width() - playersDiv.outerWidth() - 16;
             var maxCanvasHeight = gameScreen.height() - 16;
             Tron.ArenaCanvas.onResize(maxCanvasWidth, maxCanvasHeight);
 
-            playersDiv.css('height', $('#arena').prop('height'));
+            playersDiv.css('height', $('#arena').outerHeight());
 
             gameContent.css({
                 top: Math.max(((gameScreen.height() / 2) - (gameContent.outerHeight() / 2)), 5),
@@ -281,13 +284,24 @@ Tron.Screen = function() {
             $(window).on('resize', _onResize);
         },
 
+        showJoinGame: function() {
+            var inputPlayerName = $('#input-playername');
+            if (!inputPlayerName.val()) {
+                inputPlayerName.val(Tron.Player.getName());
+            }
+
+            _showScreen('joingame-screen');
+
+            inputPlayerName.focus();
+        },
+
         showGame: function() {
-            _showScreen('game');
+            _showScreen('game-screen');
         },
 
         showError: function(msg) {
             $('#error-message').text(msg);
-            _showScreen('error');
+            _showScreen('error-screen');
         }
     };
 }();
@@ -310,20 +324,16 @@ Tron.Game = function() {
             Tron.Input.init();
             Tron.Screen.init();
 
-            if (Tron.Player.getName()) {
-                Tron.Game.startGame();
-            } else {
-                Tron.Game.showPlayerConfig();
-            }
+            Tron.Screen.showJoinGame();
         },
 
-        showPlayerConfig: function() {
-            Tron.Player.setName(prompt("Name: "));
-            Tron.Game.startGame();
+        joinGame: function(roomId) {
+            Tron.Player.setName($('#input-playername').val());
+            Tron.Client.connect(WEBSOCKET_URL, roomId);
         },
 
-        startGame: function() {
-            Tron.Client.connect(WEBSOCKET_URL, 0);
+        logout: function() {
+            Tron.Client.disconnect();
         }
     };
 }();

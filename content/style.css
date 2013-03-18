@@ -11,7 +11,33 @@ body {
     color: #33B5E5;
 }
 
-.game-screen {
+input[type="text"] {
+    padding: 0.4em;
+    -webkit-box-sizing: border-box;
+       -moz-box-sizing: border-box;
+            box-sizing: border-box;
+    color: #33B5E5;
+    background: black;
+    border: 1px solid #33B5E5;
+}
+
+button {
+    padding: 0.4em;
+    -webkit-box-sizing: border-box;
+       -moz-box-sizing: border-box;
+            box-sizing: border-box;
+    font-weight: bold;
+    color: #33B5E5;
+    background: black;
+    border: 1px solid #33B5E5;
+}
+
+button:hover {
+    color: black;
+    background: #33B5E5;
+}
+
+.screen {
     display: none;
     position: relative;
     height: 100%;
@@ -20,25 +46,59 @@ body {
             box-sizing: border-box;
 }
 
-.game-screen-active {
+.screen-active {
     display: block;
 }
 
-.game-content {
+#joingame-screen .content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 200px;
+    margin-top: -80px;
+    margin-left: -116px;
+    padding: 16px;
+    border: 2px solid #33B5E5;
+}
+
+#joingame-screen label {
+    display: block;
+}
+
+#joingame-screen input[type="text"] {
+    width: 100%;
+    margin-top: 0.2em;
+    font-size: 1.2em;
+}
+
+#joingame-screen button {
+    width: 100%;
+    margin-top: 1em;
+    font-size: 1.2em;
+}
+
+#game-screen .content {
     position: absolute;
     white-space: nowrap;
 }
 
 #players {
+    position: relative;
     float: left;
     width: 200px;
+    -webkit-box-sizing: border-box;
+       -moz-box-sizing: border-box;
+            box-sizing: border-box;
     margin-right: 5px;
+    padding-bottom: 70px;
     border: 2px solid #33B5E5;
 }
 
 #players ul {
+    max-height: 100%;
     margin: 0;
     padding: 0;
+    overflow: hidden;
     list-style-type: none;
 }
 
@@ -64,18 +124,30 @@ body {
     right: 0;
 }
 
+#players .buttons {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 0.7em;
+}
+
+#players .buttons button {
+    width: 100%;
+}
+
 #arena {
     border: 2px solid #33B5E5;
 }
 
-.error-dlg-container {
+#error-screen .content {
     position: absolute;
     top: 40%;
     width: 100%;
     text-align: center;
 }
 
-.error-dlg {
+#error-message {
     display: inline-block;
     margin: 0 1em;
     padding: 1em;
