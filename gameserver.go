@@ -168,6 +168,7 @@ func (gs *GameServer) run() {
 				delete(gs.Clients, c)
 				close(c.send)
 				close(c.receive)
+				gs.SendScoreboard()
 			}
 		case m := <-gs.Broadcast:
 			for c, _ := range gs.Clients {
