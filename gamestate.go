@@ -3,9 +3,10 @@ package main
 import "time"
 
 type gameState struct {
-	Board         [][]*Client
-	IsRunning     bool
-	AutoStartTime *time.Time
+	Board           [][]*Client
+	IsRunning       bool
+	AutoStartTime   *time.Time
+	SuddenDeathTime *time.Time
 }
 
 func NewGameState() *gameState {

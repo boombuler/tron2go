@@ -5,6 +5,18 @@ import (
 	"strconv"
 )
 
+type SuddenDeathStartData struct {
+}
+
+func (b *SuddenDeathStartData) ToJson() []byte {
+	jw := new(JsonWriter)
+	jw.StartObj()
+	jw.WriteStr("Event", "draw.suddendeath")
+	jw.EndObj()
+
+	return jw.Flush()
+}
+
 type NewBlock struct {
 	X        int
 	Y        int

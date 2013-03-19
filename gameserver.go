@@ -42,52 +42,24 @@ func (gs *GameServer) gameLoop(endSignal chan bool) {
 		select {
 		case <-ticker.C:
 			gs.calcRound()
-
+			ticker = gs.adjustSpeed(ticker)
 		case <-endSignal:
 			return
 		}
 	}
 }
 
-func (gs *GameServer) SendInitialState(c *connection) {
-	clients := make([]Client, 0)
+func (gs *GameServer) adjustSpeed(ticker *time.Ticker) *time.Ticker {
+	if gs.SuddenDeathTime != nil {
+		timeSinceSDStart := time.Now().Sub(*gs.SuddenDeathTime)
+		SDRound := int(timeSinceSDStart / SUDDENDEATH_INC_TIME)
+		speedFactor := 1.0 + (float64(SDRound) * SUDDENDEATH_FACTOR)
+		speed := time.Duration(float64(SPEED.Nanoseconds()) / speedFactor)
 
-	for _, p := range gs.Clients {
-		if p.kind == Player {
-			clients = append(clients, *p)
-		}
+		ticker.Stop()
+		ticker = time.NewTicker(speed)
 	}
-
-	data := SerializeGameState(clients, gs.gameState.Board)
-
-	if c != nil {
-		c.send <- data
-	} else if len(gs.Clients) > 0 {
-		gs.Broadcast <- data
-	}
-}
-
-func (gs *GameServer) SendScoreboard() {
-	clients := make([]Client, 0)
-
-	for _, p := range gs.Clients {
-		if p.kind == Player {
-			clients = append(clients, *p)
-		}
-	}
-	gs.Broadcast <- SerializeScoreboard(clients)
-}
-
-func (gs *GameServer) getPlayers(alive bool) []*Client {
-	res := make([]*Client, 0)
-	for _, c := range gs.Clients {
-		if c.kind == Player {
-			if !alive || c.Alive {
-				res = append(res, c)
-			}
-		}
-	}
-	return res
+	return ticker
 }
 
 func (gs *GameServer) calcRound() {
@@ -151,7 +123,54 @@ func (gs *GameServer) checkGameOver() {
 
 	if alivecount < 2 {
 		gs.newGame()
+	} else if alivecount <= SUDDENDEATH_MIN_PLAYERS {
+		if gs.SuddenDeathTime == nil {
+			sdStart := time.Now()
+			gs.SuddenDeathTime = &sdStart
+			gs.Broadcast <- new(SuddenDeathStartData).ToJson()
+		}
 	}
+}
+
+func (gs *GameServer) SendInitialState(c *connection) {
+	clients := make([]Client, 0)
+
+	for _, p := range gs.Clients {
+		if p.kind == Player {
+			clients = append(clients, *p)
+		}
+	}
+
+	data := SerializeGameState(clients, gs.gameState.Board)
+
+	if c != nil {
+		c.send <- data
+	} else if len(gs.Clients) > 0 {
+		gs.Broadcast <- data
+	}
+}
+
+func (gs *GameServer) SendScoreboard() {
+	clients := make([]Client, 0)
+
+	for _, p := range gs.Clients {
+		if p.kind == Player {
+			clients = append(clients, *p)
+		}
+	}
+	gs.Broadcast <- SerializeScoreboard(clients)
+}
+
+func (gs *GameServer) getPlayers(alive bool) []*Client {
+	res := make([]*Client, 0)
+	for _, c := range gs.Clients {
+		if c.kind == Player {
+			if !alive || c.Alive {
+				res = append(res, c)
+			}
+		}
+	}
+	return res
 }
 
 func (gs *GameServer) run() {
