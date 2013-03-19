@@ -4,6 +4,7 @@ import (
 	"log"
 	"math"
 	"sort"
+	"strings"
 )
 
 type Client struct {
@@ -201,16 +202,15 @@ func (c *Client) readInput() {
 		case "move.down":
 			c.pushNewDirection(Down)
 		case "set.name":
-			var name string
-			if !msgData.getValue("Name", &name) {
+			name := ""
+			if msgData.getValue("Name", &name) {
+				name = strings.TrimSpace(name)
+			}
+			if name == "" {
 				name = "Anonymous"
 			}
 			c.Name = name
-			if name == "" {
-				c.tryElevateTo(Spectator)
-			} else {
-				c.tryElevateTo(Player)
-			}
+			c.tryElevateTo(Player)
 			c.server.SendScoreboard()
 		}
 	}
