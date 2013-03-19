@@ -261,8 +261,16 @@ Tron.ArenaCanvas = function() {
 
 
 Tron.Screen = function() {
-    var _showScreen = function(screenId) {
+    var showScreenTimeoutId;
+
+
+    var _hideActiveScreen = function() {
+        clearTimeout(showScreenTimeoutId);
         $('.screen-active').removeClass('screen-active');
+    };
+
+    var _showScreen = function(screenId) {
+        _hideActiveScreen();
         $('#' + screenId).addClass('screen-active');
         _onResize();
     };
@@ -306,6 +314,14 @@ Tron.Screen = function() {
             _showScreen('game-screen');
         },
 
+        showWait: function(msg) {
+            _hideActiveScreen();
+            $('#wait-message').text(msg);
+            showScreenTimeoutId = setTimeout(function() {
+                _showScreen('wait-screen');
+            }, 500);
+        },
+
         showError: function(msg) {
             $('#error-message').text(msg);
             _showScreen('error-screen');
@@ -335,6 +351,7 @@ Tron.Game = function() {
         },
 
         joinGame: function(roomId) {
+            Tron.Screen.showWait('Connecting...');
             Tron.Player.setName($('#input-playername').val());
             Tron.Client.connect(WEBSOCKET_URL, roomId);
         },
