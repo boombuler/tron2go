@@ -19,10 +19,10 @@ type Client struct {
 }
 
 func (c Client) ToJson() []byte {
-	jw := new(JsonWriter).StartObj()
+	jw := new(JsonWriter).StartObj("")
 
-	jw.WriteInt("Id", c.Id).Next()
-	jw.WriteInt("Score", int(c.Score)).Next()
+	jw.WriteInt("Id", c.Id)
+	jw.WriteInt("Score", int(c.Score))
 	jw.WriteStr("Name", c.Name)
 
 	return jw.EndObj().Flush()

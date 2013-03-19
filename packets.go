@@ -10,7 +10,7 @@ type SuddenDeathStartData struct {
 
 func (b *SuddenDeathStartData) ToJson() []byte {
 	jw := new(JsonWriter)
-	jw.StartObj()
+	jw.StartObj("")
 	jw.WriteStr("Event", "draw.suddendeath")
 	jw.EndObj()
 
@@ -25,10 +25,10 @@ type NewBlock struct {
 
 func (b *NewBlock) ToJson() []byte {
 	jw := new(JsonWriter)
-	jw.StartObj()
+	jw.StartObj("")
 	jw.WriteInt("X", b.X)
-	jw.Next().WriteInt("Y", b.Y)
-	jw.Next().WriteInt("PlayerId", b.PlayerId)
+	jw.WriteInt("Y", b.Y)
+	jw.WriteInt("PlayerId", b.PlayerId)
 	jw.EndObj()
 
 	return jw.Flush()
@@ -38,18 +38,13 @@ type RoundData []NewBlock
 
 func (r *RoundData) ToJson() []byte {
 	jw := new(JsonWriter)
-	jw.StartObj()
+	jw.StartObj("")
 
 	jw.WriteStr("Event", "draw.blocks")
-	jw.Next().WriteIdent("Blocks")
-	jw.StartArray()
+	jw.StartArray("Blocks")
 
-	for i, b := range *r {
-		if i != 0 {
-			jw.Next()
-		}
-
-		jw.Write(&b)
+	for _, b := range *r {
+		jw.Write("", &b)
 	}
 
 	return jw.EndArray().EndObj().Flush()
@@ -57,25 +52,22 @@ func (r *RoundData) ToJson() []byte {
 
 func (c *Client) SerializeIdentity() []byte {
 	jw := new(JsonWriter)
-	jw.StartObj()
+	jw.StartObj("")
 	jw.WriteStr("Event", "set.identity")
-	jw.Next().WriteInt("Id", c.Id)
-	jw.Next().WriteStr("Kind", c.kind.String())
+	jw.WriteInt("Id", c.Id)
+	jw.WriteStr("Kind", c.kind.String())
 	jw.EndObj()
 	return jw.Flush()
 }
 
 func SerializeGameState(clients []Client, board [][]*Client) []byte {
-	jw := new(JsonWriter).StartObj()
-	jw.WriteStr("Event", "draw.gamestate").Next()
-	jw.WriteIdent("Players").StartArray()
-	for i, p := range clients {
-		if i != 0 {
-			jw.Next()
-		}
-		jw.Write(p)
+	jw := new(JsonWriter).StartObj("")
+	jw.WriteStr("Event", "draw.gamestate")
+	jw.StartArray("Players")
+	for _, p := range clients {
+		jw.Write("", p)
 	}
-	jw.EndArray().Next()
+	jw.EndArray()
 
 	buff := new(bytes.Buffer)
 
@@ -95,14 +87,11 @@ func SerializeGameState(clients []Client, board [][]*Client) []byte {
 }
 
 func SerializeScoreboard(clients []Client) []byte {
-	jw := new(JsonWriter).StartObj()
-	jw.WriteStr("Event", "draw.scoreboard").Next()
-	jw.WriteIdent("Players").StartArray()
-	for i, p := range clients {
-		if i != 0 {
-			jw.Next()
-		}
-		jw.Write(p)
+	jw := new(JsonWriter).StartObj("")
+	jw.WriteStr("Event", "draw.scoreboard")
+	jw.StartArray("Players")
+	for _, p := range clients {
+		jw.Write("", p)
 	}
 	jw.EndArray()
 
@@ -117,15 +106,12 @@ type RoomData struct {
 
 func (r RoomData) ToJson() []byte {
 	jw := new(JsonWriter)
-	jw.StartObj()
-	jw.WriteInt("Id", r.Id).Next()
-	jw.WriteInt("MaxPlayers", r.MaxPlayers).Next()
-	jw.WriteIdent("Players").StartArray()
-	for i, p := range r.Players {
-		if i != 0 {
-			jw.Next()
-		}
-		jw.Write(p)
+	jw.StartObj("")
+	jw.WriteInt("Id", r.Id)
+	jw.WriteInt("MaxPlayers", r.MaxPlayers)
+	jw.StartArray("Players")
+	for _, p := range r.Players {
+		jw.Write("", p)
 	}
 
 	return jw.EndArray().EndObj().Flush()
@@ -135,12 +121,9 @@ type RoomsData []RoomData
 
 func (rooms *RoomsData) ToJson() []byte {
 	jw := new(JsonWriter)
-	jw.StartArray()
-	for i, rd := range *rooms {
-		if i != 0 {
-			jw.Next()
-		}
-		jw.Write(rd)
+	jw.StartArray("")
+	for _, rd := range *rooms {
+		jw.Write("", rd)
 	}
 	jw.EndArray()
 	return jw.Flush()
