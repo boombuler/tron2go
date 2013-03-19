@@ -115,10 +115,17 @@ Tron.Client = function() {
             conn = new WebSocket(url +'?'+ roomId);
             conn.binaryType = 'arraybuffer';
             conn.onclose = function(evt) {
-                Tron.Screen.showJoinGame();
-            }
-            conn.onerror = function(evt) {
-                Tron.Screen.showError('ERROR: ' + evt);
+                if (evt.wasClean) {
+                    Tron.Screen.showJoinGame();
+                } else {
+                    var msg = "Connection lost (" + evt.code;
+                    if (evt.reason) {
+                        msg = msg + ": " + evt.reason;
+                    }
+                    msg = msg + ")";
+
+                    Tron.Screen.showError(msg);
+                }
             }
             conn.onopen = function(evt) {
                 Tron.Screen.showGame();
