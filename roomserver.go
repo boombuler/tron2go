@@ -12,6 +12,7 @@ type RoomServer struct {
 	m           sync.Mutex
 	rooms       map[int]*GameServer
 	stopSignals map[int]chan<- bool
+	maxrooms    int
 }
 
 var roomserver *RoomServer = new(RoomServer)
@@ -21,6 +22,9 @@ func (rs *RoomServer) getFreeId() int {
 	for {
 		if _, ok := rs.rooms[id]; ok {
 			id++
+			if id >= rs.maxrooms {
+				return -1
+			}
 		} else {
 			return id
 		}
@@ -52,15 +56,22 @@ func (rs *RoomServer) setRoomTimeout(id int) {
 	}
 }
 
-func (rs *RoomServer) createRoom() int {
+func (rs *RoomServer) createRoom(autoclose bool) int {
 	rs.m.Lock()
 	defer rs.m.Unlock()
 
 	newRoom := NewGameServer()
-	stopSignal := make(chan bool, 1)
+	var stopSignal chan bool = nil
+	if autoclose {
+		stopSignal = make(chan bool, 1)
+	}
 	go newRoom.run(stopSignal)
 
 	id := rs.getFreeId()
+	if id < 0 {
+		return id
+	}
+
 	if rs.stopSignals == nil {
 		rs.stopSignals = make(map[int]chan<- bool)
 	}
@@ -73,12 +84,20 @@ func (rs *RoomServer) createRoom() int {
 	return id
 }
 
+func (rs *RoomServer) SetMaxRooms(cnt int) {
+	rs.maxrooms = cnt
+	if cnt == 1 {
+		rs.createRoom(false)
+	}
+}
+
 func (rs *RoomServer) GetRoom(id int) *GameServer {
-	if id < 0 || id >= len(rs.rooms) {
+	room, ok := rs.rooms[id]
+	if !ok {
 		log.Println("Invalid RoomId: ", id)
 		return nil
 	}
-	return rs.rooms[id]
+	return room
 }
 
 func (rs *RoomServer) GetRoomInfo(id int) *RoomData {
@@ -97,13 +116,19 @@ func (rs *RoomServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	paths := strings.Split(r.URL.Path, "/")
 
 	if len(paths) > 0 && paths[len(paths)-1] == "new" {
-		w.Write(rs.GetRoomInfo(rs.createRoom()).ToJson())
+		newRoom := rs.createRoom(true)
+		if newRoom >= 0 {
+			w.Write(rs.GetRoomInfo(newRoom).ToJson())
+		} else {
+			w.Write((&ClientError{Message: "Unable to create room"}).ToJson())
+		}
 		return
 	}
 
-	rooms := make(RoomsData, 0)
+	rData := &RoomsData{MaxRoomCount: rs.maxrooms}
+	rData.Rooms = make([]*RoomData, 0)
 	for idx, _ := range rs.rooms {
-		rooms = append(rooms, rs.GetRoomInfo(idx))
+		rData.Rooms = append(rData.Rooms, rs.GetRoomInfo(idx))
 	}
-	w.Write(rooms.ToJson())
+	w.Write(rData.ToJson())
 }

@@ -67,19 +67,27 @@ Tron.PlayerList = function() {
 
 Tron.RoomList = function() {
     var rooms = [];
+    var maxrooms = 0;
 
 
     return {
         update: function(roomData) {
-            rooms = roomData;
+            maxrooms = roomData.MaxRoomCount;
+            rooms = roomData.Rooms;
             rooms.sort(function(a, b) { return a.Id - b.Id; })
 
             var buttonJoinGame = $('#button-joingame');
             var roomListDiv = $('#roomlist');
             var buttonNewRoom = $('#button-newroom');
-            if (false /* TODO: replace with 'maxrooms == 1' */ && rooms.length == 1) {
-                roomListDiv.hide();
+
+            if (maxrooms <= rooms.length) {
                 buttonNewRoom.hide();
+            } else {
+                buttonNewRoom.show();
+            }
+
+            if (maxrooms == 1 && rooms.length == 1) {
+                roomListDiv.hide();
                 buttonJoinGame.show();
             } else {
                 buttonJoinGame.hide();
@@ -106,8 +114,6 @@ Tron.RoomList = function() {
                 } else {
                     roomListDiv.hide();
                 }
-
-                buttonNewRoom.show();
             }
         },
 
@@ -141,6 +147,12 @@ Tron.Client = function() {
         },
         "draw.scoreboard": function(data) {
             Tron.PlayerList.update(data.Players);
+        },
+        "draw.suddendeath": function(data) {
+            // ToDo
+        },
+        "draw.error": function(data) {
+            Tron.Screen.showError(data.Message)
         }
     };
 

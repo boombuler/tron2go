@@ -17,6 +17,18 @@ func (b *SuddenDeathStartData) ToJson() []byte {
 	return jw.Flush()
 }
 
+type ClientError struct {
+	Message string
+}
+
+func (ce ClientError) ToJson() []byte {
+	jw := new(JsonWriter)
+	jw.StartObj("")
+	jw.WriteStr("Event", "draw.error")
+	jw.WriteStr("Message", ce.Message)
+	return jw.EndObj().Flush()
+}
+
 type NewBlock struct {
 	X        int
 	Y        int
@@ -115,14 +127,20 @@ func (r RoomData) ToJson() []byte {
 	return jw.EndObj().Flush()
 }
 
-type RoomsData []*RoomData
+type RoomsData struct {
+	Rooms        []*RoomData
+	MaxRoomCount int
+}
 
-func (rooms *RoomsData) ToJson() []byte {
+func (rd *RoomsData) ToJson() []byte {
 	jw := new(JsonWriter)
-	jw.StartArray("")
-	for _, rd := range *rooms {
-		jw.Write("", rd)
+	jw.StartObj("")
+	jw.WriteInt("MaxRoomCount", rd.MaxRoomCount)
+	jw.StartArray("Rooms")
+	for _, room := range rd.Rooms {
+		jw.Write("", room)
 	}
 	jw.EndArray()
+	jw.EndObj()
 	return jw.Flush()
 }

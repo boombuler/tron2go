@@ -9,6 +9,7 @@ import (
 )
 
 var addr = flag.String("addr", ":13337", "http service address")
+var roomcnt = flag.Int("maxrooms", 1, "maximum number of rooms")
 
 var contentTypes = map[string]string{
 	".css":  "text/css; charset=utf-8",
@@ -39,6 +40,7 @@ func serveFiles(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	flag.Parse()
+	roomserver.SetMaxRooms(*roomcnt)
 
 	http.HandleFunc("/", serveFiles)
 	http.HandleFunc("/consts.js", serveConsts)
