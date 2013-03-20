@@ -35,7 +35,7 @@ func (gs *GameServer) newGame() {
 	gs.SendInitialState(nil)
 }
 
-func (gs *GameServer) gameLoop(endSignal chan bool) {
+func (gs *GameServer) gameLoop(endSignal <-chan bool) {
 	ticker := time.NewTicker(SPEED)
 	defer ticker.Stop()
 	for {
@@ -176,8 +176,10 @@ func (gs *GameServer) getPlayers(alive bool) []*Client {
 	return res
 }
 
-func (gs *GameServer) run() {
-	go gs.gameLoop(nil)
+func (gs *GameServer) run(stop <-chan bool) {
+	stopGameLoop := make(chan bool, 1)
+
+	go gs.gameLoop(stopGameLoop)
 	for {
 		select {
 		case c := <-gs.Register:
@@ -191,11 +193,15 @@ func (gs *GameServer) run() {
 				close(c.send)
 				close(c.receive)
 				go gs.SendScoreboard()
+				go roomserver.RemoveRoomIfEmpty(gs)
 			}
 		case m := <-gs.Broadcast:
 			for c, _ := range gs.Clients {
 				c.send <- m
 			}
+		case <-stop:
+			stopGameLoop <- true
+			return
 		}
 	}
 }

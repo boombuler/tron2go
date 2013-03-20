@@ -101,7 +101,8 @@ func SerializeScoreboard(clients []Client) []byte {
 type RoomData struct {
 	Id         int
 	MaxPlayers int
-	Players    []Client
+	Players    int
+	Spectators int
 }
 
 func (r RoomData) ToJson() []byte {
@@ -109,15 +110,12 @@ func (r RoomData) ToJson() []byte {
 	jw.StartObj("")
 	jw.WriteInt("Id", r.Id)
 	jw.WriteInt("MaxPlayers", r.MaxPlayers)
-	jw.StartArray("Players")
-	for _, p := range r.Players {
-		jw.Write("", p)
-	}
-
-	return jw.EndArray().EndObj().Flush()
+	jw.WriteInt("Players", r.Players)
+	jw.WriteInt("Spectators", r.Spectators)
+	return jw.EndObj().Flush()
 }
 
-type RoomsData []RoomData
+type RoomsData []*RoomData
 
 func (rooms *RoomsData) ToJson() []byte {
 	jw := new(JsonWriter)
