@@ -58,7 +58,10 @@ func (gs *GameServer) adjustSpeed(ticker *time.Ticker) *time.Ticker {
 
 		ticker.Stop()
 		ticker = time.NewTicker(speed)
+	} else {
+		ticker = time.NewTicker(SPEED)
 	}
+
 	return ticker
 }
 
