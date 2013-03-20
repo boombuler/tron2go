@@ -50,13 +50,13 @@ func (gs *GameServer) gameLoop(endSignal chan bool) {
 }
 
 func (gs *GameServer) adjustSpeed(ticker *time.Ticker) *time.Ticker {
+	ticker.Stop()
 	if gs.SuddenDeathTime != nil {
 		timeSinceSDStart := time.Now().Sub(*gs.SuddenDeathTime)
 		SDRound := int(timeSinceSDStart / SUDDENDEATH_INC_TIME)
 		speedFactor := 1.0 + (float64(SDRound) * SUDDENDEATH_FACTOR)
 		speed := time.Duration(float64(SPEED.Nanoseconds()) / speedFactor)
 
-		ticker.Stop()
 		ticker = time.NewTicker(speed)
 	} else {
 		ticker = time.NewTicker(SPEED)
