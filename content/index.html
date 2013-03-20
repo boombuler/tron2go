@@ -16,14 +16,15 @@
     <body>
         <div id="joingame-screen" class="screen">
             <div class="content">
-                <form action="#" onsubmit="Tron.Game.joinGame(0); return false;">
+                <form action="#" onsubmit="Tron.Game.doDefaultJoinGameAction(); return false;">
                     <label for="input-playername">Player Name:</label>
                     <input id="input-playername" name="name" type="text" autofocus="autofocus" />
-                    <button id="button-joingame" type="submit">Join Game</button>
+                    <button id="button-joingame" type="button" onclick="Tron.Game.joinGame(0)">Join Game</button>
                     <div id="roomlist">
                         <span>Select Room:</span>
                         <ul></ul>
                     </div>
+                    <button id="button-newroom" type="button" onclick="Tron.Game.createNewRoom()">Create Room</button>
                 </form>
             </div>
         </div>

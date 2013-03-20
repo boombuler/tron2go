@@ -65,6 +65,63 @@ Tron.PlayerList = function() {
 }();
 
 
+Tron.RoomList = function() {
+    var rooms = [];
+
+
+    return {
+        update: function(roomData) {
+            rooms = roomData;
+            rooms.sort(function(a, b) { return a.Id - b.Id; })
+
+            var buttonJoinGame = $('#button-joingame');
+            var roomListDiv = $('#roomlist');
+            var buttonNewRoom = $('#button-newroom');
+            if (false /* TODO: replace with 'maxrooms == 1' */ && rooms.length == 1) {
+                roomListDiv.hide();
+                buttonNewRoom.hide();
+                buttonJoinGame.show();
+            } else {
+                buttonJoinGame.hide();
+
+                if (rooms.length > 0) {
+                    roomListDiv.show();
+
+                    var list = $('ul', roomListDiv);
+                    list.empty();
+                    $.each(rooms, function(idx, room) {
+                        var listItem = $('<li>');
+
+                        var link = $('<a>', {
+                            href: 'javascript:Tron.Game.joinGame(' + room.Id + ')'
+                        }).appendTo(listItem);
+
+                        $('<span>').addClass('room-name').text('Room ' + room.Id).appendTo(link);
+
+                        var playerCountText = room.Players + '/' + room.MaxPlayers;
+                        $('<span>').addClass('room-player-count').text(playerCountText).appendTo(link);
+
+                       listItem.appendTo(list);
+                    });
+                } else {
+                    roomListDiv.hide();
+                }
+
+                buttonNewRoom.show();
+            }
+        },
+
+        getDefaultRoomId: function() {
+            if (rooms.length > 0) {
+                return rooms[0].Id;
+            } else {
+                return -1;
+            }
+        }
+    };
+}();
+
+
 Tron.Client = function() {
     var conn;
 
@@ -304,35 +361,6 @@ Tron.Screen = function() {
         }
     };
 
-    var _updateRoomList = function(rooms) {
-        var buttonJoingame = $('#button-joingame');
-        var roomListDiv = $('#roomlist');
-        if (rooms.length == 1) {
-            roomListDiv.hide();
-            buttonJoingame.show();
-        } else {
-            buttonJoingame.hide();
-            roomListDiv.show();
-
-            var list = $('ul', roomListDiv);
-            list.empty();
-            $.each(rooms, function(idx, room) {
-                var listItem = $('<li>');
-
-                var link = $('<a>', {
-                    href: 'javascript:Tron.Game.joinGame(' + room.Id + ')'
-                }).appendTo(listItem);
-
-                $('<span>').addClass('room-name').text('Room ' + room.Id).appendTo(link);
-
-                var playerCountText = room.Players.length + '/' + room.MaxPlayers;
-                $('<span>').addClass('room-player-count').text(playerCountText).appendTo(link);
-
-               listItem.appendTo(list);
-            });
-        }
-    };
-
     return {
         init: function() {
             $(window).on('resize', _onResize);
@@ -351,7 +379,7 @@ Tron.Screen = function() {
                 url: 'rooms',
                 dataType: 'json',
                 success: function(data, textStatus, jqXHR) {
-                    _updateRoomList(data);
+                    Tron.RoomList.update(data);
                     _showScreen('joingame-screen');
                     inputPlayerName.focus();
                 },
@@ -399,6 +427,39 @@ Tron.Game = function() {
             Tron.Screen.init();
 
             Tron.Screen.showJoinGame();
+        },
+
+        doDefaultJoinGameAction: function() {
+            var defaultRoomId = Tron.RoomList.getDefaultRoomId();
+            if (defaultRoomId < 0) {
+                Tron.Game.createNewRoom();
+            } else {
+                Tron.Game.joinGame(defaultRoomId);
+            }
+        },
+
+        createNewRoom: function() {
+            Tron.Screen.showWait('Creating room...');
+
+            var onCreateRoomError = function() {
+                Tron.Screen.showError('Creating room failed');
+                setTimeout(function() {
+                    Tron.Screen.showJoinGame();
+                }, 2000);
+            };
+            $.ajax({
+                type: 'POST',
+                url: 'rooms/new',
+                dataType: 'json',
+                success: function(data, textStatus, jqXHR) {
+                    if (data && (data.Id != undefined)) {
+                        Tron.Game.joinGame(data.Id);
+                    } else {
+                        onCreateRoomError();
+                    }
+                },
+                error: onCreateRoomError
+            });
         },
 
         joinGame: function(roomId) {
