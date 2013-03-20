@@ -275,7 +275,20 @@ Tron.Screen = function() {
         _onResize();
     };
 
+    var _centerContentBox = function(content, screen, padding) {
+        content.css({
+            top: Math.max(((screen.height() / 2) - (content.outerHeight() / 2)), padding),
+            left: Math.max(((screen.width() / 2) - (content.outerWidth() / 2)), padding)
+        });
+    };
+
     var _onResize = function() {
+        var joingameScreen = $('#joingame-screen');
+        if (joingameScreen.is(':visible')) {
+            var joingameContent = $('.content', joingameScreen);
+            _centerContentBox(joingameContent, joingameScreen, 10);
+        }
+
         var gameScreen = $('#game-screen');
         if (gameScreen.is(':visible')) {
             var gameContent = $('.content', gameScreen);
@@ -287,9 +300,35 @@ Tron.Screen = function() {
 
             playersDiv.css('height', $('#arena').outerHeight());
 
-            gameContent.css({
-                top: Math.max(((gameScreen.height() / 2) - (gameContent.outerHeight() / 2)), 5),
-                left: Math.max(((gameScreen.width() / 2) - (gameContent.outerWidth() / 2)), 5)
+            _centerContentBox(gameContent, gameScreen, 5);
+        }
+    };
+
+    var _updateRoomList = function(rooms) {
+        var buttonJoingame = $('#button-joingame');
+        var roomListDiv = $('#roomlist');
+        if (rooms.length == 1) {
+            roomListDiv.hide();
+            buttonJoingame.show();
+        } else {
+            buttonJoingame.hide();
+            roomListDiv.show();
+
+            var list = $('ul', roomListDiv);
+            list.empty();
+            $.each(rooms, function(idx, room) {
+                var listItem = $('<li>');
+
+                var link = $('<a>', {
+                    href: 'javascript:Tron.Game.joinGame(' + room.Id + ')'
+                }).appendTo(listItem);
+
+                $('<span>').addClass('room-name').text('Room ' + room.Id).appendTo(link);
+
+                var playerCountText = room.Players.length + '/' + room.MaxPlayers;
+                $('<span>').addClass('room-player-count').text(playerCountText).appendTo(link);
+
+               listItem.appendTo(list);
             });
         }
     };
@@ -300,14 +339,26 @@ Tron.Screen = function() {
         },
 
         showJoinGame: function() {
+            Tron.Screen.showWait('Loading...');
+
             var inputPlayerName = $('#input-playername');
             if (!inputPlayerName.val()) {
                 inputPlayerName.val(Tron.Player.getName());
             }
 
-            _showScreen('joingame-screen');
-
-            inputPlayerName.focus();
+            $.ajax({
+                type: 'GET',
+                url: 'rooms',
+                dataType: 'json',
+                success: function(data, textStatus, jqXHR) {
+                    _updateRoomList(data);
+                    _showScreen('joingame-screen');
+                    inputPlayerName.focus();
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    Tron.Screen.showError('Loading room list failed');
+                }
+            });
         },
 
         showGame: function() {
@@ -334,13 +385,13 @@ Tron.Game = function() {
     return {
         init: function() {
             if (!window['WebSocket']) {
-               Tron.Screen.showError('Your browser does not support WebSockets');
-               return;
+                Tron.Screen.showError('Your browser does not support WebSockets');
+                return;
             }
 
             if (!Tron.ArenaCanvas.init('#arena', FIELD_WIDTH, FIELD_HEIGHT)) {
-               Tron.Screen.showError('Your browser does not support canvas elements');
-               return;
+                Tron.Screen.showError('Your browser does not support canvas elements');
+                return;
             }
 
             Tron.Player.loadConfig();

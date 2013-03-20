@@ -64,11 +64,7 @@ button:hover {
 
 #joingame-screen .content {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 200px;
-    margin-top: -80px;
-    margin-left: -116px;
+    width: 240px;
     padding: 16px;
     border: 2px solid #33B5E5;
 }
@@ -89,6 +85,46 @@ button:hover {
     font-size: 1.2em;
 }
 
+#roomlist {
+    margin-top: 2em;
+}
+
+#roomlist ul {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+    border: 1px solid #33B5E5;
+}
+
+#roomlist ul li {
+    position: relative;
+}
+#roomlist ul li:hover {
+    background: #33B5E5;
+}
+
+#roomlist ul li a {
+    color: #33B5E5;
+    text-decoration: none;
+}
+#roomlist ul li a:hover {
+    color: black;
+}
+
+#roomlist ul li .room-name {
+    display: block;
+    margin-right: 4em;
+    padding: 0.8em 0 0.8em 0.4em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#roomlist ul li .room-player-count {
+    position: absolute;
+    top: 0.8em;
+    right: 0.4em;
+}
 #game-screen .content {
     position: absolute;
     white-space: nowrap;

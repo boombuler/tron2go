@@ -19,7 +19,11 @@
                 <form action="#" onsubmit="Tron.Game.joinGame(0); return false;">
                     <label for="input-playername">Player Name:</label>
                     <input id="input-playername" name="name" type="text" autofocus="autofocus" />
-                    <button type="submit">Join Game</button>
+                    <button id="button-joingame" type="submit">Join Game</button>
+                    <div id="roomlist">
+                        <span>Select Room:</span>
+                        <ul></ul>
+                    </div>
                 </form>
             </div>
         </div>
