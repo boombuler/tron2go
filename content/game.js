@@ -127,6 +127,34 @@ Tron.RoomList = function() {
     };
 }();
 
+Tron.Chat = function() {
+    var _sendMessage = function() {
+        var msg = $('#input-chatmsg').val();
+        $('#input-chatmsg').val('');
+
+        $(document).trigger('chat.send', msg);
+        return false;
+    }
+
+    return {
+        init: function() {
+            $('#button-send-chatmsg').click(_sendMessage);
+            $('#input-chatmsg').bind('keydown.return', _sendMessage);
+        },
+        showMessage: function(data) {
+            var nick = $('<span>').addClass('player-name').text(data.Sender.Name + ': ')
+            if (data.Sender.Id !== undefined) {
+                nick.css('color', PLAYER_COLORS[data.Sender.Id]);
+            } else {
+                nick.addClass('spectator');
+            }
+
+            var chatentry = $('<div>').append(nick).append($('<span>').text(data.Message));
+            chatentry.appendTo('#chatlog');
+            $('#chatlog').scrollTop(chatentry.offset().top);
+        }
+    }
+}();
 
 Tron.Client = function() {
     var conn;
@@ -152,7 +180,10 @@ Tron.Client = function() {
             // ToDo
         },
         "draw.error": function(data) {
-            Tron.Screen.showError(data.Message)
+            Tron.Screen.showError(data.Message);
+        },
+        "chat.message": function(data) {
+            Tron.Chat.showMessage(data);
         }
     };
 
@@ -177,6 +208,10 @@ Tron.Client = function() {
 
     var _sendMoveCommand = function(direction) {
         conn.send(JSON.stringify({ "Cmd": "move." + direction }));
+    };
+
+    var _sendChatMessage = function(msg) {
+        conn.send(JSON.stringify({ "Cmd": "chat.send", "Message" : msg }));
     };
 
     return {
@@ -214,6 +249,7 @@ Tron.Client = function() {
             $(document).bind('move.left', function() { _sendMoveCommand('left'); });
             $(document).bind('move.up', function() { _sendMoveCommand('up'); });
             $(document).bind('move.down', function() { _sendMoveCommand('down'); });
+            $(document).bind('chat.send', function(ev, msg) {_sendChatMessage(msg); })
         },
 
         disconnect: function() {
@@ -364,9 +400,10 @@ Tron.Screen = function() {
         if (gameScreen.is(':visible')) {
             var gameContent = $('.content', gameScreen);
             var playersDiv = $('#players');
+            var chatDiv = $('#chat');
 
             var maxCanvasWidth = gameScreen.width() - playersDiv.outerWidth() - 16;
-            var maxCanvasHeight = gameScreen.height() - 16;
+            var maxCanvasHeight = gameScreen.height() - chatDiv.outerHeight() - 16;
             Tron.ArenaCanvas.onResize(maxCanvasWidth, maxCanvasHeight);
 
             playersDiv.css('height', $('#arena').outerHeight());
@@ -422,7 +459,6 @@ Tron.Screen = function() {
     };
 }();
 
-
 Tron.Game = function() {
     return {
         init: function() {
@@ -439,6 +475,7 @@ Tron.Game = function() {
             Tron.Player.loadConfig();
             Tron.Input.init();
             Tron.Screen.init();
+            Tron.Chat.init();
 
             Tron.Screen.showJoinGame();
         },

@@ -183,6 +183,23 @@ func (c *Client) tryElevateTo(kind ClientKind) {
 	}
 }
 
+func (c *Client) sendChatMsg(msg string) {
+	jw := new(JsonWriter)
+	jw.StartObj("")
+	jw.WriteStr("Event", "chat.message")
+
+	jw.StartObj("Sender")
+	if c.kind == Player {
+		jw.WriteInt("Id", c.Id) // Spectators don't have an Id
+	}
+	jw.WriteStr("Name", c.Name)
+	jw.EndObj()
+
+	jw.WriteStr("Message", msg)
+	jw.EndObj()
+	c.server.Broadcast <- jw.Flush()
+}
+
 func (c *Client) readInput() {
 	for data := range c.conn.receive {
 		msgData := newRawJSON(data)
@@ -201,6 +218,11 @@ func (c *Client) readInput() {
 			c.pushNewDirection(Up)
 		case "move.down":
 			c.pushNewDirection(Down)
+		case "chat.send":
+			msg := ""
+			if msgData.getValue("Message", &msg) {
+				go c.sendChatMsg(msg)
+			}
 		case "set.name":
 			name := ""
 			if msgData.getValue("Name", &name) {
