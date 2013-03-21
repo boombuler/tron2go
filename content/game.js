@@ -184,7 +184,9 @@ Tron.Client = function() {
             conn = new WebSocket(url +'?'+ roomId);
             conn.binaryType = 'arraybuffer';
             conn.onclose = function(evt) {
-                if (evt.wasClean) {
+                if (evt.code >= 4000 && evt.code < 5000) {
+                    Tron.Screen.showError(evt.reason);
+                } else if (evt.wasclean) {
                     Tron.Screen.showJoinGame();
                 } else {
                     var msg = "Connection lost (" + evt.code;

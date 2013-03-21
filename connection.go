@@ -143,6 +143,7 @@ func (c *connection) writePump() {
 
 // serverWs handles webocket requests from the client.
 func serveSocket(w http.ResponseWriter, r *http.Request) {
+
 	if r.Method != "GET" {
 		http.Error(w, "Method not allowed", 405)
 		return
@@ -152,23 +153,25 @@ func serveSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	roomid, err := strconv.Atoi(r.URL.RawQuery)
-	if err != nil {
-		http.Error(w, "Room not found", 404)
-		return
-	}
-
-	room := roomserver.GetRoom(roomid)
-	if room == nil {
-		http.Error(w, "Room not found", 404)
-		return
-	}
-
 	ws, err := websocket.Upgrade(w, r.Header, "", 1024, 1024)
 
 	if err != nil {
 		http.Error(w, err.Error(), 400)
 		log.Println(err)
+		return
+	}
+
+	roomid, err := strconv.Atoi(r.URL.RawQuery)
+	if err != nil {
+		ws.WriteControl(websocket.OpClose, websocket.FormatCloseMessage(4000, "Not a valid room id"), time.Now().Add(writeWait))
+		ws.Close()
+		return
+	}
+
+	room := roomserver.GetRoom(roomid)
+	if room == nil {
+		ws.WriteControl(websocket.OpClose, websocket.FormatCloseMessage(4004, "Room not found"), time.Now().Add(writeWait))
+		ws.Close()
 		return
 	}
 
