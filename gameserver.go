@@ -176,6 +176,15 @@ func (gs *GameServer) getPlayers(alive bool) []*Client {
 	return res
 }
 
+func (gs *GameServer) SendNotification(msg string) {
+	jw := new(JsonWriter)
+	jw.StartObj("")
+	jw.WriteStr("Event", "chat.message")
+	jw.WriteStr("Message", msg)
+	jw.EndObj()
+	gs.Broadcast <- jw.Flush()
+}
+
 func (gs *GameServer) run(stop <-chan bool) {
 	stopGameLoop := make(chan bool, 1)
 
@@ -186,14 +195,7 @@ func (gs *GameServer) run(stop <-chan bool) {
 			go gs.onPlayerConnected(c)
 		case c := <-gs.Unregister:
 			if cl, ok := gs.Clients[c]; ok {
-				if cl.Id > 0 {
-					gs.idStore.Free(gs.Clients[c].Id)
-				}
-				delete(gs.Clients, c)
-				close(c.send)
-				close(c.receive)
-				go gs.SendScoreboard()
-				go roomserver.RemoveRoomIfEmpty(gs)
+				gs.onPlayerDisconnected(cl)
 			}
 		case m := <-gs.Broadcast:
 			for c, _ := range gs.Clients {
@@ -204,6 +206,18 @@ func (gs *GameServer) run(stop <-chan bool) {
 			return
 		}
 	}
+}
+
+func (gs *GameServer) onPlayerDisconnected(cl *Client) {
+	if cl.Id > 0 {
+		gs.idStore.Free(cl.Id)
+	}
+	delete(gs.Clients, cl.conn)
+	close(cl.conn.send)
+	close(cl.conn.receive)
+	go gs.SendScoreboard()
+	go roomserver.RemoveRoomIfEmpty(gs)
+	go gs.SendNotification(cl.Name + " disconnected")
 }
 
 func (gs *GameServer) onPlayerConnected(c *connection) {

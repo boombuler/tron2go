@@ -142,15 +142,20 @@ Tron.Chat = function() {
             $('#input-chatmsg').bind('keydown.return', _sendMessage);
         },
         showMessage: function(data) {
-            var nick = $('<span>').addClass('player-name').text(data.Sender.Name + ': ')
-            if (data.Sender.Id !== undefined) {
-                nick.css('color', PLAYER_COLORS[data.Sender.Id]);
+            var chatentry = $('<div>').appendTo('#chatlog');
+
+            if (data.Sender !== undefined) {
+                var nick = $('<span>').addClass('player-name').text(data.Sender.Name + ': ').appendTo(chatentry)
+                if (data.Sender.Id !== undefined) {
+                    nick.css('color', PLAYER_COLORS[data.Sender.Id]);
+                } else {
+                    nick.addClass('spectator');
+                }
             } else {
-                nick.addClass('spectator');
+                chatentry.addClass('servermsg')
             }
 
-            var chatentry = $('<div>').append(nick).append($('<span>').text(data.Message));
-            chatentry.appendTo('#chatlog');
+            chatentry.append($('<span>').text(data.Message));
             $('#chatlog').scrollTop(chatentry.offset().top);
         }
     }

@@ -168,6 +168,7 @@ func (c *Client) tryElevateTo(kind ClientKind) {
 					c.server.newGame()
 				}
 			}
+			c.server.SendNotification(c.Name + " is now spectator")
 		}
 	case Player:
 		c.Id = c.server.idStore.TryGet()
@@ -179,6 +180,7 @@ func (c *Client) tryElevateTo(kind ClientKind) {
 			} else {
 				c.server.newGame()
 			}
+			c.server.SendNotification(c.Name + " connected")
 		}
 	}
 }

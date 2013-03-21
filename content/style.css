@@ -227,6 +227,10 @@ button:hover {
     margin: 0.2em;
 }
 
+.servermsg {
+    color: #888888;
+}
+
 #input-chatmsg {
     border-bottom-width: 0;
     border-left-width: 0;
