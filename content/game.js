@@ -226,7 +226,7 @@ Tron.Client = function() {
             conn.onclose = function(evt) {
                 if (evt.code >= 4000 && evt.code < 5000) {
                     Tron.Screen.showError(evt.reason);
-                } else if (evt.wasclean) {
+                } else if (evt.wasClean) {
                     Tron.Screen.showJoinGame();
                 } else {
                     var msg = "Connection lost (" + evt.code;
