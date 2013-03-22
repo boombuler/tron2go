@@ -184,9 +184,6 @@ Tron.Client = function() {
         "draw.suddendeath": function(data) {
             // ToDo
         },
-        "draw.error": function(data) {
-            Tron.Screen.showError(data.Message);
-        },
         "chat.message": function(data) {
             Tron.Chat.showMessage(data);
         }
@@ -235,7 +232,7 @@ Tron.Client = function() {
                     }
                     msg = msg + ")";
 
-                    Tron.Screen.showError(msg);
+                    Tron.Screen.showCriticalError(msg);
                 }
             }
             conn.onopen = function(evt) {
@@ -440,7 +437,7 @@ Tron.Screen = function() {
                     inputPlayerName.focus();
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
-                    Tron.Screen.showError('Loading room list failed');
+                    Tron.Screen.showCriticalError('Loading room list failed');
                 }
             });
         },
@@ -460,6 +457,15 @@ Tron.Screen = function() {
         showError: function(msg) {
             $('#error-message').text(msg);
             _showScreen('error-screen');
+
+            setTimeout(function() {
+                Tron.Screen.showJoinGame();
+            }, 2000);
+        },
+
+        showCriticalError: function(msg) {
+            $('#error-message').text(msg);
+            _showScreen('error-screen');
         }
     };
 }();
@@ -468,12 +474,12 @@ Tron.Game = function() {
     return {
         init: function() {
             if (!window['WebSocket']) {
-                Tron.Screen.showError('Your browser does not support WebSockets');
+                Tron.Screen.showCriticalError('Your browser does not support WebSockets');
                 return;
             }
 
             if (!Tron.ArenaCanvas.init('#arena', FIELD_WIDTH, FIELD_HEIGHT)) {
-                Tron.Screen.showError('Your browser does not support canvas elements');
+                Tron.Screen.showCriticalError('Your browser does not support canvas elements');
                 return;
             }
 
@@ -497,11 +503,12 @@ Tron.Game = function() {
         createNewRoom: function() {
             Tron.Screen.showWait('Creating room...');
 
-            var onCreateRoomError = function() {
-                Tron.Screen.showError('Creating room failed');
-                setTimeout(function() {
-                    Tron.Screen.showJoinGame();
-                }, 2000);
+            var onCreateRoomError = function(data) {
+                if (data && (data.Event == 'draw.error') && data.Message) {
+                    Tron.Screen.showError(data.Message);
+                } else {
+                    Tron.Screen.showError('Creating room failed');
+                }
             };
             $.ajax({
                 type: 'POST',
@@ -511,10 +518,12 @@ Tron.Game = function() {
                     if (data && (data.Id != undefined)) {
                         Tron.Game.joinGame(data.Id);
                     } else {
-                        onCreateRoomError();
+                        onCreateRoomError(data);
                     }
                 },
-                error: onCreateRoomError
+                error: function(jqXHR, textStatus, errorThrown) {
+                    onCreateRoomError();
+                }
             });
         },
 
