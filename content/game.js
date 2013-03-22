@@ -86,7 +86,7 @@ Tron.RoomList = function() {
                 buttonNewRoom.show();
             }
 
-            if (maxrooms == 1 && rooms.length == 1) {
+            if (Tron.RoomList.isSingleRoomServer()) {
                 roomListDiv.hide();
                 buttonJoinGame.show();
             } else {
@@ -104,7 +104,8 @@ Tron.RoomList = function() {
                             href: 'javascript:Tron.Game.joinGame(' + room.Id + ')'
                         }).appendTo(listItem);
 
-                        $('<span>').addClass('room-name').text('Room ' + room.Id).appendTo(link);
+                        var roomName = Tron.RoomList.getRoomName(room.Id);
+                        $('<span>').addClass('room-name').text(roomName).appendTo(link);
 
                         var playerCountText = room.Players + '/' + room.MaxPlayers;
                         $('<span>').addClass('room-player-count').text(playerCountText).appendTo(link);
@@ -115,6 +116,14 @@ Tron.RoomList = function() {
                     roomListDiv.hide();
                 }
             }
+        },
+
+        isSingleRoomServer: function() {
+            return ((maxrooms == 1) && (rooms.length == 1));
+        },
+
+        getRoomName: function(roomId) {
+            return 'Room ' + roomId;
         },
 
         getDefaultRoomId: function() {
@@ -221,6 +230,8 @@ Tron.Client = function() {
             conn = new WebSocket(url +'?'+ roomId);
             conn.binaryType = 'arraybuffer';
             conn.onclose = function(evt) {
+                Tron.Screen.updateTitle();
+
                 if (evt.code >= 4000 && evt.code < 5000) {
                     Tron.Screen.showError(evt.reason);
                 } else if (evt.wasClean) {
@@ -236,6 +247,7 @@ Tron.Client = function() {
                 }
             }
             conn.onopen = function(evt) {
+                Tron.Screen.updateTitle(roomId);
                 Tron.Screen.showGame();
 
                 _sendSetNameCommand(Tron.Player.getName());
@@ -370,6 +382,7 @@ Tron.ArenaCanvas = function() {
 
 
 Tron.Screen = function() {
+    var defaultTitle;
     var showScreenTimeoutId;
 
 
@@ -416,7 +429,19 @@ Tron.Screen = function() {
 
     return {
         init: function() {
+            defaultTitle = document.title;
+
             $(window).on('resize', _onResize);
+        },
+
+        updateTitle: function(roomId) {
+            var titleText = defaultTitle;
+
+            if ((roomId != undefined) && !Tron.RoomList.isSingleRoomServer()) {
+                titleText = titleText + ' - ' + Tron.RoomList.getRoomName(roomId);
+            }
+
+            document.title = titleText;
         },
 
         showJoinGame: function() {

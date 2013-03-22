@@ -166,7 +166,7 @@ button:hover {
     right: 0;
 }
 
-#players .buttons {
+#players .footer {
     position: absolute;
     bottom: 0;
     left: 0;
@@ -174,7 +174,7 @@ button:hover {
     padding: 0.35em;;
 }
 
-#players .buttons button {
+#players .footer button {
     width: 100%;
     margin: 0;
 }
