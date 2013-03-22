@@ -72,13 +72,13 @@ func (gs *GameServer) calcRound() {
 		if len(players) < 2 {
 			return
 		}
-		anyoneReady := false
+		readyCnt := 0
 		allReady := true
 
 		for _, p := range players {
 			p.AcceptInput()
 			if p.Direction != NONE {
-				anyoneReady = true
+				readyCnt++
 			} else {
 				allReady = false
 			}
@@ -86,7 +86,7 @@ func (gs *GameServer) calcRound() {
 
 		if allReady {
 			gs.IsRunning = true
-		} else if anyoneReady {
+		} else if readyCnt >= 2 {
 			if gs.gameState.AutoStartTime == nil {
 				startAt := time.Now().Add(AUTOSTART_TIME)
 				gs.gameState.AutoStartTime = &startAt
