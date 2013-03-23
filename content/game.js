@@ -41,6 +41,44 @@ Tron.Player = function() {
 
 
 Tron.PlayerList = function() {
+    var _updatePlayerVisibility = function() {
+        var list = $('#players ul');
+        list.children().removeClass('hidden');
+
+        var listScrollHeight = list[0].scrollHeight;
+        var myself = list.children('.player-myself');
+        if ((myself.length != 1) || (listScrollHeight <= list.height())) {
+            // No need to hide players
+            return;
+        }
+
+        var entryHeight = Math.floor(listScrollHeight / list.children().length);
+        var maxEntries = Math.floor(list.height() / entryHeight);
+
+        var counter = 1;
+        var prev = myself.prev();
+        var next = myself.next();
+        while ((prev.length > 0) || (next.length > 0)) {
+            if (prev.length > 0) {
+                if (counter < maxEntries) {
+                    counter++;
+                } else {
+                    prev.addClass('hidden');
+                }
+                prev = prev.prev();
+            }
+
+            if (next.length > 0) {
+                if (counter < maxEntries) {
+                    counter++;
+                } else {
+                    next.addClass('hidden');
+                }
+                next = next.next();
+            }
+        }
+    };
+
     return {
         update: function(players) {
             players.sort(function(a, b) { return b.Score - a.Score; })
@@ -60,6 +98,16 @@ Tron.PlayerList = function() {
 
                 listItem.appendTo(list);
             });
+
+            _updatePlayerVisibility();
+        },
+
+        setHeight: function(height) {
+            var playersDiv = $('#players');
+            if (height != playersDiv.outerHeight()) {
+                playersDiv.css('height', height);
+                _updatePlayerVisibility();
+            }
         }
     };
 }();
@@ -436,7 +484,7 @@ Tron.Screen = function() {
             var maxCanvasHeight = gameScreen.height() - chatDiv.outerHeight() - 16;
             Tron.ArenaCanvas.onResize(maxCanvasWidth, maxCanvasHeight);
 
-            playersDiv.css('height', $('#arena').outerHeight());
+            Tron.PlayerList.setHeight($('#arena').outerHeight());
 
             _centerContentBox(gameContent, gameScreen, 5);
         }
