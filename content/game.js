@@ -191,7 +191,7 @@ Tron.Client = function() {
             Tron.PlayerList.update(data.Players);
         },
         "draw.suddendeath": function(data) {
-            // ToDo
+            Tron.ArenaCanvas.showSuddenDeathStart();
         },
         "chat.message": function(data) {
             Tron.Chat.showMessage(data);
@@ -376,6 +376,21 @@ Tron.ArenaCanvas = function() {
 
                 board.push(block);
             });
+        },
+
+        showSuddenDeathStart: function() {
+            var suddenDeath = $('#sudden-death');
+
+            var canvasPos = canvas.position();
+            suddenDeath.css({
+                top: canvasPos.top,
+                left: canvasPos.left,
+                height: canvas.outerHeight(),
+                width: canvas.outerWidth()
+            });
+
+            suddenDeath.addClass('show');
+            setTimeout(function() { suddenDeath.removeClass('show'); }, 1000);
         }
     };
 }();
