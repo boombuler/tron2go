@@ -87,16 +87,25 @@ Tron.PlayerList = function() {
 
             var list = $('ul', playersDiv);
             list.empty();
+            var rank = 1;
+            var lastScore = -1;
             $.each(players, function(idx, player) {
+                if (player.Score < lastScore) {
+                    rank++;
+                }
+
                 var listItem = $('<li>').css('color', PLAYER_COLORS[player.Id]);
                 if (player.Id == Tron.Player.getId()) {
                     listItem.addClass('player-myself');
                 }
 
+                $('<span>').addClass('player-rank').text(rank + '.').appendTo(listItem);
                 $('<span>').addClass('player-name').text(player.Name).appendTo(listItem);
                 $('<span>').addClass('player-score').text(player.Score).appendTo(listItem);
 
                 listItem.appendTo(list);
+
+                lastScore = player.Score;
             });
 
             _updatePlayerVisibility();

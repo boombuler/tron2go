@@ -163,6 +163,12 @@ button:hover {
     text-overflow: ellipsis;
 }
 
+#players ul li .player-rank {
+    float: left;
+    min-width: 1.5em;
+    padding-right: 0.1em;
+}
+
 #players ul li .player-score {
     position: absolute;
     top: 0;
