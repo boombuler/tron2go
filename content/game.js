@@ -94,9 +94,15 @@ Tron.PlayerList = function() {
                     rank++;
                 }
 
-                var listItem = $('<li>').css('color', PLAYER_COLORS[player.Id]);
-                if (player.Id == Tron.Player.getId()) {
-                    listItem.addClass('player-myself');
+                var listItem = $('<li>');
+                if (player.Id > -1) {
+                    listItem.css('color', PLAYER_COLORS[player.Id]);
+                    if (player.Id == Tron.Player.getId()) {
+                        listItem.addClass('player-myself');
+                    }
+                }
+                if (player.Kind == 'Spectator') {
+                    listItem.addClass('spectator');
                 }
 
                 $('<span>').addClass('player-rank').text(rank + '.').appendTo(listItem);

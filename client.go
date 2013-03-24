@@ -22,6 +22,7 @@ func (c Client) ToJson() []byte {
 	jw := new(JsonWriter).StartObj("")
 
 	jw.WriteInt("Id", c.Id)
+	jw.WriteStr("Kind", c.kind.String())
 	jw.WriteInt("Score", int(c.Score))
 	jw.WriteStr("Name", c.Name)
 

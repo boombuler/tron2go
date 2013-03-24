@@ -139,9 +139,7 @@ func (gs *GameServer) SendInitialState(c *connection) {
 	clients := make([]Client, 0)
 
 	for _, p := range gs.Clients {
-		if p.kind == Player {
-			clients = append(clients, *p)
-		}
+		clients = append(clients, *p)
 	}
 
 	data := SerializeGameState(clients, gs.gameState.Board)
@@ -157,9 +155,7 @@ func (gs *GameServer) SendScoreboard() {
 	clients := make([]Client, 0)
 
 	for _, p := range gs.Clients {
-		if p.kind == Player {
-			clients = append(clients, *p)
-		}
+		clients = append(clients, *p)
 	}
 	gs.Broadcast <- SerializeScoreboard(clients)
 }

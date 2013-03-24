@@ -156,6 +156,10 @@ button:hover {
     font-weight: bold;
 }
 
+#players .spectator {
+    color: #888888;
+}
+
 #players ul li .player-name {
     display: block;
     margin-right: 2em;
