@@ -4,18 +4,13 @@ import (
 	"flag"
 	"io/ioutil"
 	"log"
+	"mime"
 	"net/http"
 	"path/filepath"
 )
 
 var addr = flag.String("addr", ":13337", "http service address")
 var roomcnt = flag.Int("maxrooms", 1, "maximum number of rooms")
-
-var contentTypes = map[string]string{
-	".css":  "text/css; charset=utf-8",
-	".js":   "application/x-javascript; charset=utf-8",
-	".html": "text/html; charset=utf-8",
-}
 
 func serveFiles(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
@@ -30,7 +25,7 @@ func serveFiles(w http.ResponseWriter, r *http.Request) {
 
 	data, err := ioutil.ReadFile("./content" + filename)
 	if err == nil {
-		w.Header().Set("Content-Type", contentTypes[filepath.Ext(filename)])
+		w.Header().Set("Content-Type", mime.TypeByExtension(filepath.Ext(filename)))
 		_, err = w.Write(data)
 	}
 	if err != nil {
