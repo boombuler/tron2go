@@ -6,7 +6,7 @@ import (
 )
 
 type GameServer struct {
-	Clients    map[*connection]*Client
+	Clients    ClientMap
 	Register   chan *connection
 	Unregister chan *connection
 	Broadcast  chan []byte
@@ -18,7 +18,7 @@ func NewGameServer() *GameServer {
 	result := &GameServer{
 		Register:   make(chan *connection),
 		Unregister: make(chan *connection),
-		Clients:    make(map[*connection]*Client),
+		Clients:    make(ClientMap),
 		Broadcast:  make(chan []byte),
 		idStore:    createIdStore(),
 	}
@@ -29,7 +29,7 @@ func NewGameServer() *GameServer {
 func (gs *GameServer) newGame() {
 	log.Println("NewGame")
 	gs.gameState = NewGameState()
-	for _, p := range gs.Clients {
+	for p := range gs.Clients.AllClients() {
 		p.Reset(true)
 	}
 	gs.SendInitialState(nil)
@@ -66,7 +66,7 @@ func (gs *GameServer) adjustSpeed(ticker *time.Ticker) *time.Ticker {
 }
 
 func (gs *GameServer) calcRound() {
-	players := gs.getPlayers(false)
+	players := gs.Clients.Players().AsSlice()
 
 	if !gs.IsRunning {
 		if len(players) < 2 {
@@ -117,12 +117,7 @@ func (gs *GameServer) calcRound() {
 }
 
 func (gs *GameServer) checkGameOver() {
-	alivecount := 0
-	for _, p := range gs.Clients {
-		if p.kind == Player && p.Alive {
-			alivecount++
-		}
-	}
+	alivecount := gs.Clients.AliveCount()
 
 	if alivecount < 2 {
 		gs.newGame()
@@ -136,13 +131,7 @@ func (gs *GameServer) checkGameOver() {
 }
 
 func (gs *GameServer) SendInitialState(c *connection) {
-	clients := make([]Client, 0)
-
-	for _, p := range gs.Clients {
-		clients = append(clients, *p)
-	}
-
-	data := SerializeGameState(clients, gs.gameState.Board)
+	data := SerializeGameState(gs.Clients.AllClients(), gs.gameState.Board)
 
 	if c != nil {
 		c.send <- data
@@ -152,24 +141,7 @@ func (gs *GameServer) SendInitialState(c *connection) {
 }
 
 func (gs *GameServer) SendScoreboard() {
-	clients := make([]Client, 0)
-
-	for _, p := range gs.Clients {
-		clients = append(clients, *p)
-	}
-	gs.Broadcast <- SerializeScoreboard(clients)
-}
-
-func (gs *GameServer) getPlayers(alive bool) []*Client {
-	res := make([]*Client, 0)
-	for _, c := range gs.Clients {
-		if c.kind == Player {
-			if !alive || c.Alive {
-				res = append(res, c)
-			}
-		}
-	}
-	return res
+	gs.Broadcast <- SerializeScoreboard(gs.Clients.AllClients())
 }
 
 func (gs *GameServer) SendNotification(msg string) {

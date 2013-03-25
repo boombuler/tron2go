@@ -72,11 +72,11 @@ func (c *Client) SerializeIdentity() []byte {
 	return jw.Flush()
 }
 
-func SerializeGameState(clients []Client, board [][]*Client) []byte {
+func SerializeGameState(clients ClientIterator, board [][]*Client) []byte {
 	jw := new(JsonWriter).StartObj("")
 	jw.WriteStr("Event", "draw.gamestate")
 	jw.StartArray("Players")
-	for _, p := range clients {
+	for p := range clients {
 		jw.Write("", p)
 	}
 	jw.EndArray()
@@ -98,11 +98,11 @@ func SerializeGameState(clients []Client, board [][]*Client) []byte {
 	return jw.EndObj().Flush()
 }
 
-func SerializeScoreboard(clients []Client) []byte {
+func SerializeScoreboard(clients ClientIterator) []byte {
 	jw := new(JsonWriter).StartObj("")
 	jw.WriteStr("Event", "draw.scoreboard")
 	jw.StartArray("Players")
-	for _, p := range clients {
+	for p := range clients {
 		jw.Write("", p)
 	}
 	jw.EndArray()

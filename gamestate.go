@@ -37,7 +37,7 @@ func NewRound(gs *GameServer) *roundState {
 func (s *roundState) getPlayer(x, y int) *Client {
 	for _, blk := range s.blocks {
 		if blk.X == x && blk.Y == y {
-			for _, p := range s.server.getPlayers(false) {
+			for p := range s.server.Clients.AllClients() {
 				if p.Id == blk.PlayerId {
 					return p
 				}
@@ -89,7 +89,7 @@ func (s *roundState) movePlayer(p *Client) {
 
 func (s *roundState) complete() []byte {
 	if len(s.killedPlayers) > 0 {
-		players := s.server.getPlayers(true)
+		players := s.server.Clients.LivingPlayers().AsSlice()
 		if len(players) == 1 {
 			players[0].Score += WINNER_SCORE
 		}

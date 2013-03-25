@@ -106,7 +106,7 @@ func (rs *RoomServer) GetRoomInfo(id int) *RoomData {
 		return nil
 	}
 
-	pCnt := len(rm.getPlayers(false))
+	pCnt := rm.Clients.PlayerCount()
 	cCnt := len(rm.Clients)
 	return &RoomData{Id: id, MaxPlayers: len(PlayerColors), Players: pCnt, Spectators: (cCnt - pCnt)}
 }
