@@ -37,7 +37,7 @@ func NewRound(gs *GameServer) *roundState {
 func (s *roundState) getPlayer(x, y int) *Client {
 	for _, blk := range s.blocks {
 		if blk.X == x && blk.Y == y {
-			for p := range s.server.Clients.AllClients() {
+			for p := range s.server.Clients.Players() {
 				if p.Id == blk.PlayerId {
 					return p
 				}
