@@ -12,7 +12,7 @@ func (ci ClientIterator) AsSlice() []*Client {
 }
 
 func (cm ClientMap) AllClients() ClientIterator {
-	outp := make(chan *Client)
+	outp := make(chan *Client, len(cm))
 	go func() {
 		for _, c := range cm {
 			if c != nil {
@@ -45,7 +45,7 @@ func (cm ClientMap) PlayerCount() int {
 }
 
 func (cm ClientMap) Players() ClientIterator {
-	outp := make(chan *Client)
+	outp := make(chan *Client, len(cm))
 	go func() {
 		for _, c := range cm {
 			if c != nil && c.kind == Player {
@@ -58,7 +58,7 @@ func (cm ClientMap) Players() ClientIterator {
 }
 
 func (cm ClientMap) LivingPlayers() ClientIterator {
-	outp := make(chan *Client)
+	outp := make(chan *Client, len(cm))
 	go func() {
 		for _, c := range cm {
 			if c != nil && c.kind == Player && c.Alive {

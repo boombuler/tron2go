@@ -224,7 +224,7 @@ func (c *Client) readInput() {
 		case "chat.send":
 			msg := ""
 			if msgData.getValue("Message", &msg) {
-				go c.sendChatMsg(msg)
+				c.sendChatMsg(msg)
 			}
 		case "set.name":
 			name := ""
@@ -233,6 +233,9 @@ func (c *Client) readInput() {
 			}
 			if name == "" {
 				name = "Anonymous"
+			}
+			if len(name) > 10 {
+				name = name[0:10] + "..."
 			}
 			c.Name = name
 			c.tryElevateTo(Player)
