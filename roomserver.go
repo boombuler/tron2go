@@ -113,6 +113,7 @@ func (rs *RoomServer) GetRoomInfo(id int) *RoomData {
 
 func (rs *RoomServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer recover()
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	paths := strings.Split(r.URL.Path, "/")
 
 	if len(paths) > 0 && paths[len(paths)-1] == "new" {
